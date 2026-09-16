@@ -1,0 +1,266 @@
+* {
+  box-sizing: border-box;
+}
+
+#app {
+  display: flex;
+  flex-direction: row;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.terminal-pane {
+  flex: 1 1 70%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-inline-end: 1px solid #10201a;
+}
+
+.terminal-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px 8px 4px 12px;
+}
+
+.terminal-host .xterm {
+  height: 100%;
+}
+
+.panel {
+  flex: 0 0 30%;
+  max-width: 420px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: #070b0d;
+  color: var(--fg);
+  overflow: hidden;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #10201a;
+  border-block-end: 1px solid #10201a;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  background: #070b0d;
+}
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5c8f77;
+}
+
+.stat-value {
+  font-size: 18px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabbar {
+  display: flex;
+  border-block-end: 1px solid #10201a;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-block-end: 2px solid transparent;
+  color: #7aa892;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-block-end-color: var(--accent);
+}
+
+.panel-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.view h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.view h3 {
+  margin: 18px 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5c8f77;
+}
+
+.view p {
+  margin: 0 0 10px;
+  line-height: 1.55;
+  color: #bfe6d2;
+}
+
+.chapter-tag {
+  display: inline-block;
+  font-size: 11px;
+  color: #5c8f77;
+  margin-block-end: 8px;
+}
+
+.objective {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.skill-list {
+  margin: 0;
+  padding-inline-start: 18px;
+}
+
+.skill-list li {
+  margin: 4px 0;
+  color: #bfe6d2;
+}
+
+.skill-list.unlocked li::marker {
+  content: '✓ ';
+  color: var(--accent);
+}
+
+.muted {
+  color: #5c8f77;
+  font-style: italic;
+}
+
+.hint {
+  border-inline-start: 2px solid var(--accent);
+  padding-inline-start: 10px;
+  margin-block-end: 14px;
+}
+
+.hint-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffd166;
+}
+
+.reveal-hint,
+.captured-badge {
+  margin-block-start: 8px;
+}
+
+.reveal-hint {
+  width: 100%;
+  padding: 10px;
+  background: #0d1a14;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.reveal-hint:hover {
+  background: #12241b;
+}
+
+.captured-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #0d2417;
+  color: var(--accent);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.touch-keys {
+  display: none;
+  gap: 6px;
+  padding: 6px 8px;
+  overflow-x: auto;
+  background: #070b0d;
+  border-block-start: 1px solid #10201a;
+}
+
+.touch-key {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 8px 10px;
+  background: #0d1a14;
+  border: 1px solid #1c3a2c;
+  border-radius: 6px;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.panel-toggle {
+  display: none;
+}
+
+/* Tablet / phone: stack, collapse the panel, show the touch keys. */
+@media (max-width: 860px) {
+  #app {
+    flex-direction: column;
+  }
+  .terminal-pane {
+    flex: 1 1 auto;
+    border-inline-end: none;
+  }
+  .panel {
+    flex: 0 0 auto;
+    max-width: none;
+    max-height: 45dvh;
+    border-block-start: 1px solid #10201a;
+  }
+  .panel.collapsed {
+    max-height: 0;
+    display: none;
+  }
+  .touch-keys {
+    display: flex;
+  }
+  .panel-toggle {
+    display: block;
+    position: fixed;
+    inset-block-start: 8px;
+    inset-inline-end: 8px;
+    z-index: 10;
+    padding: 8px 12px;
+    background: #0d1a14;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    font-family: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xterm .xterm-cursor-blink {
+    animation: none !important;
+  }
+}
