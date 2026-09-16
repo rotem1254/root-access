@@ -1,4 +1,5 @@
 import { isFsError, strerror } from '../errors';
+import { type RegexDialect, RegexError, translateRegex } from './regex';
 import type { ByteString } from '../util/bytes';
 import { parseOptions } from './args';
 import { defineCommand } from './define';
@@ -29,11 +30,6 @@ const RESET = '\x1b[0m';
 const FILE_COLOR = '\x1b[35m';
 const LINE_COLOR = '\x1b[32m';
 const SEP_COLOR = '\x1b[36m';
-
-/** Escapes a fixed string (`-F`) so RegExp matches it literally. */
-function escapeFixed(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 interface Source {
   label: string;
@@ -274,9 +270,18 @@ export const grep = defineCommand({
 
     const global = options.onlyMatching || options.color;
     const flags = `s${options.ignoreCase ? 'i' : ''}${global ? 'g' : ''}`;
+    const dialect: RegexDialect = options.fixed ? 'fixed' : options.extended ? 'extended' : 'basic';
     const patterns: RegExp[] = [];
     for (const raw of patternStrings.flatMap((p) => p.split('\n'))) {
-      let source = options.fixed ? escapeFixed(raw) : basicToExtended(raw, options.extended);
+      let source: string;
+      try {
+        source = translateRegex(raw, dialect);
+      } catch (error) {
+        ctx.stderr(
+          `grep: ${error instanceof RegexError ? error.message : 'Invalid regular expression'}\n`,
+        );
+        return 2;
+      }
       if (options.wordRegexp) source = `(?<![A-Za-z0-9_])(?:${source})(?![A-Za-z0-9_])`;
       if (options.lineRegexp) source = `^(?:${source})$`;
       try {
@@ -320,30 +325,6 @@ export const grep = defineCommand({
     return grepper.status;
   },
 });
-
-/** Translates BRE metacharacters to the ERE that JavaScript's RegExp understands. */
-function basicToExtended(pattern: string, extended: boolean): string {
-  if (extended) return pattern;
-  let out = '';
-  for (let i = 0; i < pattern.length; i++) {
-    const c = pattern.charAt(i);
-    if (c === '\\') {
-      const next = pattern.charAt(i + 1);
-      if ('+?|(){}'.includes(next)) {
-        out += next;
-        i += 1;
-      } else {
-        out += c + next;
-        i += 1;
-      }
-    } else if ('+?|(){}'.includes(c)) {
-      out += `\\${c}`;
-    } else {
-      out += c;
-    }
-  }
-  return out;
-}
 
 function collect(
   ctx: CommandContext,
