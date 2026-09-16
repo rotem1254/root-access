@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config';
-import { cspPlugin } from './scripts/vite-plugins.ts';
+import { cspPlugin, sealPlugin } from './scripts/vite-plugins.ts';
 
 export default defineConfig({
-  plugins: [cspPlugin()],
+  plugins: [sealPlugin(), cspPlugin()],
   build: {
     target: 'es2022',
     // The polyfill fetches chunks with fetch(), which the production CSP (connect-src 'none') blocks.

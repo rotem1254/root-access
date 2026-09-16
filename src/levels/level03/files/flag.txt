@@ -1,0 +1,15 @@
+NovaCorp — Restricted
+=====================
+
+If you can read this, you are authenticated as admin. That is the whole point
+of the exercise: some files are readable only by a specific account, and no
+amount of cleverness as another user will open them. You have to BECOME that
+user — legitimately, with their password.
+
+Access flag:
+
+    FLAG{p3rm1ss10n_l4dd3r_cl1mb3d}
+
+Lesson: reused passwords are how attackers climb from one account to the next.
+The admin password was sitting in a world-readable backup. Rotate credentials,
+and never leave secrets in files everyone can read.

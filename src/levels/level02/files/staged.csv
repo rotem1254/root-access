@@ -1,0 +1,9 @@
+# q3-review.csv — staged copy, exfiltrated by the intruder
+# Recovered by the security team. Whoever ran this had it copied here from
+# /srv/finance using sudo, minutes after logging in from an outside address.
+record_id,customer,plan,mrr_usd,notes
+1001,Northwind Traders,enterprise,42000,renewal Q4
+1002,Globex,growth,9800,
+1003,Initech,growth,8800,at risk
+# The forensic marker embedded by the DLP tripwire:
+# FLAG{n33dl3_1n_th3_l0gs}

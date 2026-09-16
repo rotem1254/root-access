@@ -1,0 +1,16 @@
+; portal.conf — BACKUP (auto-saved by the config editor)
+; NovaCorp internal customer portal
+[server]
+listen = 127.0.0.1:8080
+workers = 4
+
+[database]
+host = 127.0.0.1
+name = portal
+user = admin
+; NOTE: the DB admin login reuses the admin system account password.
+password = R3dOct0ber!2026
+
+[logging]
+level = info
+path = /var/log/portal/portal.log

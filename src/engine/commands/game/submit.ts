@@ -8,8 +8,10 @@ export const submit = defineCommand({
   description: 'submit a captured flag',
   usage: ['FLAG'],
   about:
-    'Submit a flag you have found to complete the level. Flags look like\nFLAG{some_text}. If it is correct, the level is captured and the next one\nunlocks.',
-  examples: [['submit FLAG{h1dd3n_1n_pl41n_s1ght}', 'submit a flag you found']],
+    'Submit a flag you have found to complete the level. Flags look like\nFLAG{...} with letters, digits and underscores inside the braces. If it is\ncorrect, the level is captured and the next one unlocks.',
+  examples: [
+    ['submit FLAG{...}', 'submit a flag you found (with the real text inside the braces)'],
+  ],
   seeAlso: ['mission(6)', 'hint(6)', 'status(6)'],
   run: async (ctx) => {
     const candidate = ctx.args.join(' ').trim();
