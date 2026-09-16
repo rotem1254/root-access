@@ -20,7 +20,11 @@ export interface KeyEvent {
 export type EditorAction = 'submit' | 'interrupt' | 'eof' | 'clear' | 'complete' | 'none';
 
 const WORD = /[A-Za-z0-9_]/;
-const CONTROL = /^[\x00-\x1f]$/;
+
+/** True for a single ASCII control character (which should never be inserted literally). */
+function isControl(key: string): boolean {
+  return key.length === 1 && key.charCodeAt(0) < 0x20;
+}
 
 export class LineEditor {
   line = '';
@@ -205,7 +209,7 @@ export class LineEditor {
         this.point = this.line.length;
         return 'none';
       default:
-        if (key.length >= 1 && !CONTROL.test(key)) this.insert(key);
+        if (key.length >= 1 && !isControl(key)) this.insert(key);
         return 'none';
     }
   }

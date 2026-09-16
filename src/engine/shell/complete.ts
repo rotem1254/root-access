@@ -1,4 +1,4 @@
-import { basename, dirname, isAbsolute, resolve } from '../fs/path';
+import { basename, isAbsolute, resolve } from '../fs/path';
 import { compareBytes } from './glob';
 import { lex } from './Lexer';
 
@@ -66,15 +66,11 @@ function completePaths(
   word: string,
   context: CompletionContext,
 ): { names: string[]; dirPrefix: string } {
-  let expanded = word;
-  let displayPrefix = '';
-  if (word.startsWith('~/')) {
-    expanded = context.home() + word.slice(1);
-  }
+  const expanded = word.startsWith('~/') ? context.home() + word.slice(1) : word;
   const slash = expanded.lastIndexOf('/');
   const dirPart = slash < 0 ? '.' : expanded.slice(0, slash + 1) || '/';
   const namePart = slash < 0 ? expanded : expanded.slice(slash + 1);
-  displayPrefix = slash < 0 ? '' : word.slice(0, word.lastIndexOf('/') + 1);
+  const displayPrefix = slash < 0 ? '' : word.slice(0, word.lastIndexOf('/') + 1);
   const absoluteDir = isAbsolute(dirPart) ? dirPart : resolve(context.cwd(), dirPart);
   const entries = context.readdir(absoluteDir);
   if (!entries) return { names: [], dirPrefix: displayPrefix };
