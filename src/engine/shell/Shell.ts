@@ -90,6 +90,7 @@ export class Shell implements ExecutionHost {
   private pendingRead: ((line: string | null) => void) | null = null;
   private readonly sleepers = new Set<() => void>();
   private interruptedFlag = false;
+  private lineAbortedFlag = false;
   private nextPid = 2300;
 
   constructor(options: ShellOptions) {
@@ -130,6 +131,10 @@ export class Shell implements ExecutionHost {
 
   get interrupted(): boolean {
     return this.interruptedFlag;
+  }
+
+  get lineAborted(): boolean {
+    return this.lineAbortedFlag;
   }
 
   /** PS1, colored like Ubuntu's default: `guest@corp-web01:~/docs$ `. */
@@ -204,6 +209,7 @@ export class Shell implements ExecutionHost {
       return Promise.resolve();
     }
     this.interruptedFlag = false;
+    this.lineAbortedFlag = false;
     this.setRequest({ kind: 'busy' });
     void this.execute(result.list);
     return this.whenReady();
@@ -268,7 +274,7 @@ export class Shell implements ExecutionHost {
       return Promise.resolve();
     }
     if (kind === 'prompt') {
-      this.io.stdout(this.session.login ? 'logout\n' : 'exit\n');
+      this.io.stderr(this.session.login ? 'logout\n' : 'exit\n');
       this.exitSession(this.session.env.lastStatus);
       this.setRequest(this.promptRequest());
     }
@@ -409,7 +415,10 @@ export class Shell implements ExecutionHost {
       depth: this.sessions.length,
       isLoginShell: session.login,
       pushSession: (user, options) => this.pushSession(user, options),
-      exit: (status) => this.exitSession(status),
+      exit: (status) => {
+        this.lineAbortedFlag = true;
+        if (this.sessions.includes(session)) this.exitSession(status);
+      },
       loginEnvironment: (user) => this.loginEnvironment(user),
       runAs: (user, path, argv, io, env) =>
         this.executor.runSimple(
@@ -429,7 +438,9 @@ export class Shell implements ExecutionHost {
           return 2;
         }
         const child: Session = { user, env, login: false, pid: this.nextPid + 1 };
-        return this.executor.runList(result.list, child, this.subprocessIO(io));
+        const status = await this.executor.runList(result.list, child, this.subprocessIO(io));
+        this.lineAbortedFlag = false;
+        return status;
       },
     };
   }

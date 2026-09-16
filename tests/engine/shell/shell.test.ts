@@ -515,10 +515,13 @@ describe('Shell: sessions', () => {
     });
     await h.run('become guest');
     await h.shell.eof();
-    expect(h.take().stdout).toBe('exit\n');
+    expect(h.take().stderr).toBe('exit\n');
     expect(h.shell.depth).toBe(1);
     await h.shell.eof();
-    expect(h.take().stdout).toBe('logout\nConnection to corp-web01 closed.\n\nWelcome back.\n');
+    expect(h.take()).toEqual({
+      stdout: 'Connection to corp-web01 closed.\n\nWelcome back.\n',
+      stderr: 'logout\n',
+    });
     expect(h.shell.depth).toBe(1);
     expect(h.shell.motd()).toBe('Welcome back.\n');
   });

@@ -46,6 +46,8 @@ export interface ExecutionHost {
   readonly registry: CommandRegistry;
   readonly game: GameAPI;
   readonly interrupted: boolean;
+  /** Set by `exit`: stop running the rest of the command line. */
+  readonly lineAborted: boolean;
   columns(): number;
   readTerminal(prompt: string, secret: boolean): Promise<string | null>;
   sleep(ms: number): Promise<void>;
@@ -60,6 +62,8 @@ function write(sink: Sink, chunk: ByteString): void {
   if (sink.kind === 'stream') sink.write(chunk);
   else sink.data += chunk;
 }
+
+const DECLARATION_BUILTINS = new Set(['export', 'declare', 'local', 'readonly']);
 
 export const literalWord = (text: string): Word => ({
   parts: [{ kind: 'text', value: text, quoted: true }],
@@ -87,7 +91,7 @@ export class Executor {
       if (skip) continue;
       status = await this.runPipeline(item.pipeline, session, io);
       session.env.lastStatus = status;
-      if (this.host.interrupted) break;
+      if (this.host.interrupted || this.host.lineAborted) break;
     }
     return status;
   }
@@ -237,7 +241,7 @@ export class Executor {
   ): Promise<number> {
     const { machine } = this.host;
     const expansion = this.expansionContext(session);
-    const argv = expandWords(command.words, expansion);
+    const argv = this.expandArguments(command, expansion);
     const baseCredentials = machine.users.credentials(session.user);
     const fs = this.fileSystem(session, baseCredentials);
     const fds = { stdin: io.stdin, out: io.stdout, err: io.stderr };
@@ -326,6 +330,27 @@ export class Executor {
       cwd: env.cwd,
     });
     return status;
+  }
+
+  /** Declaration builtins (`export A=$X`) expand assignment-like words without splitting, like bash. */
+  private expandArguments(command: SimpleCommand, expansion: ExpansionContext): string[] {
+    const [first, ...rest] = command.words;
+    if (!first) return [];
+    const head = expandWords([first], expansion);
+    if (head.length !== 1 || !DECLARATION_BUILTINS.has(head[0] ?? '')) {
+      return [...head, ...expandWords(rest, expansion)];
+    }
+    return [
+      ...head,
+      ...rest.flatMap((word) => {
+        const lead = word.parts[0];
+        const assignmentLike =
+          lead?.kind === 'text' && !lead.quoted && /^[A-Za-z_][A-Za-z0-9_]*=/.test(lead.value);
+        return assignmentLike
+          ? [expandAssignment(word, expansion)]
+          : expandWords([word], expansion);
+      }),
+    ];
   }
 
   private stdin(source: StdinSource, fs: FileSystem): Stdin {
