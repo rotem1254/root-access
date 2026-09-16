@@ -21,13 +21,13 @@ interfaces; this document records the decisions and the intended shape.
 - [x] 13. Commands: `find su sudo`
 - [x] 14. Commands: `mkdir touch rm cp mv chmod`
 - [x] 15. Command conformance covered by per-command tests
-- [ ] 16. Game layer + game commands + storage
-- [ ] 17. Chapter 1 levels + stubs + sealing + solvability/anti-shortcut tests
-- [ ] 18. UI: line editor + completion
-- [ ] 19. UI: xterm terminal
-- [ ] 20. UI: layout, panels, HUD, touch keys
-- [ ] 21. UI: boot sequence, capture banner, level-complete, autosave
-- [ ] 22. README + Definition-of-Done pass + Phase 1 report
+- [x] 16. Game layer + game commands + storage
+- [x] 17. Chapter 1 levels + stubs + sealing + solvability/anti-shortcut tests
+- [x] 18. UI: line editor + completion
+- [x] 19. UI: xterm terminal
+- [x] 20. UI: layout, panels, HUD, touch keys
+- [x] 21. UI: boot sequence, capture banner, autosave
+- [x] 22. README + Definition-of-Done pass + Phase 1 report
 
 Phase 1 work happens on branch `phase-1`, merged into `main` once the phase report is accepted.
 
