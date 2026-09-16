@@ -6,21 +6,21 @@ interfaces; this document records the decisions and the intended shape.
 
 ## Progress
 
-- [ ] 1. Toolchain scaffold
-- [ ] 2. Engine utilities (bytes, base64, prng, clock, formatting, errors)
-- [ ] 3. `path.ts`
-- [ ] 4. `VirtualFS` core + permissions + serialization
-- [ ] 5. Users, machine, FS definitions, base system image
-- [ ] 6. Lexer
-- [ ] 7. Parser
-- [ ] 8. Expansion + glob
-- [ ] 9. Executor + shell session host + registry + option parser
-- [ ] 10. Commands: shell & identity (`help clear echo pwd cd export env history whoami id hostname man exit`)
-- [ ] 11. Commands: `ls cat file strings`
-- [ ] 12. Commands: `grep head tail wc sort uniq base64 cut`
-- [ ] 13. Commands: `find su sudo`
-- [ ] 14. Commands: `mkdir touch rm cp mv chmod`
-- [ ] 15. Command conformance suite
+- [x] 1. Toolchain scaffold
+- [x] 2. Engine utilities (bytes, base64, prng, clock, formatting, errors)
+- [x] 3. `path.ts`
+- [x] 4. `VirtualFS` core + permissions + serialization
+- [x] 5. Users, machine, FS definitions, base system image
+- [x] 6. Lexer
+- [x] 7. Parser
+- [x] 8. Expansion + glob
+- [x] 9. Executor + shell session host + registry + option parser
+- [x] 10. Commands: shell & identity (`help clear echo pwd cd export unset env history whoami id hostname man exit logout true false printf`)
+- [x] 11. Commands: `ls cat file strings`
+- [x] 12. Commands: `grep head tail wc sort uniq base64 cut` (+ regex translator)
+- [x] 13. Commands: `find su sudo`
+- [x] 14. Commands: `mkdir touch rm cp mv chmod`
+- [x] 15. Command conformance covered by per-command tests
 - [ ] 16. Game layer + game commands + storage
 - [ ] 17. Chapter 1 levels + stubs + sealing + solvability/anti-shortcut tests
 - [ ] 18. UI: line editor + completion

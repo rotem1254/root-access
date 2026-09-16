@@ -1,11 +1,8 @@
 /** What commands may ask of the game. The engine's Game implements it; tests use NULL_GAME. */
 
-export interface ScoreBreakdown {
-  base: number;
-  hintPenalty: number;
-  speedBonus: number;
-  total: number;
-}
+import type { ScoreBreakdown } from './scoring';
+
+export type { ScoreBreakdown };
 
 export interface MissionInfo {
   levelId: string;

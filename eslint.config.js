@@ -33,7 +33,9 @@ const UI_IMPORT = {
   message: 'The engine, levels and content must not depend on the UI.',
 };
 const LEVELS_IMPORT = {
-  regex: '(^|/)levels(/|$)',
+  // Blocks engine files from reaching up into src/levels (paths that climb with ..),
+  // without catching the sibling `levels` game command inside the engine.
+  regex: '\\.\\./([^/]+/)*levels(/|$)',
   message: 'The engine must not import level content; inject the catalog instead.',
 };
 

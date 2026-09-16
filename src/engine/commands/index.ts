@@ -33,6 +33,7 @@ import { sudo } from './sudo';
 import { tail } from './tail';
 import { touch } from './touch';
 import { trueCommand } from './true';
+import { GAME_COMMANDS } from './game';
 import { CommandRegistry, type Command } from './types';
 import { uniq } from './uniq';
 import { unset } from './unset';
@@ -83,5 +84,5 @@ export const LINUX_COMMANDS: readonly Command[] = [
 ];
 
 export function createCommandRegistry(extra: readonly Command[] = []): CommandRegistry {
-  return new CommandRegistry().register(...LINUX_COMMANDS, ...extra);
+  return new CommandRegistry().register(...LINUX_COMMANDS, ...GAME_COMMANDS, ...extra);
 }
