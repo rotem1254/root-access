@@ -7,6 +7,17 @@ that works the same way on a real Linux system.
 Stack: Vite + TypeScript (strict, `noUncheckedIndexedAccess`), xterm.js, Vitest, ESLint + Prettier,
 vanilla TS UI. No backend: everything runs client-side, progress is saved behind a storage interface.
 
+- Full spec: [`docs/spec.md`](docs/spec.md)
+- Approved Phase 1 plan, decisions, progress checklist and output-fidelity conventions:
+  [`docs/phase-1-plan.md`](docs/phase-1-plan.md). Read it before working on Phase 1.
+
+## Environment
+
+- Node 24 LTS lives in `~/.local/node/bin` (on PATH via `~/.zprofile`). Non-login shells may need
+  `export PATH="$HOME/.local/node/bin:$PATH"`.
+- TypeScript is pinned to `~6.0.x`: typescript-eslint does not support TypeScript 7 yet. Don't bump it.
+- Each phase is developed on a `phase-N` branch and merged into `main` after the phase report is accepted.
+
 ## Working agreement
 
 1. **Plan before code.** Before implementing a phase, reply with: an implementation plan in small,
@@ -33,6 +44,11 @@ vanilla TS UI. No backend: everything runs client-side, progress is saved behind
 - Error messages must match real bash/coreutils output exactly (e.g.
   `cat: foo: No such file or directory`, `bash: foo: command not found`, `Permission denied`).
   Learning to read real errors is part of the education.
+- `src/engine`, `src/levels` and `src/content` compile without the DOM lib (`tsconfig.engine.json`).
+- Flags never appear in plaintext in level data or the build: levels store `flagHash`, plaintext flags
+  live only in test-only `solution.ts` files, and level files are imported with `?sealed`.
+- Fiction uses reserved addresses only: IPs from RFC 5737 / RFC 1918, domains under `.example` or
+  `.internal`.
 
 ## Testing (non-negotiable)
 
