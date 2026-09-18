@@ -7,8 +7,9 @@ export default defineConfig({
     target: 'es2022',
     // The polyfill fetches chunks with fetch(), which the production CSP (connect-src 'none') blocks.
     modulePreload: { polyfill: false },
-    // xterm.js is the bulk of the bundle and is needed up front; ~130 KB gzipped is acceptable.
-    chunkSizeWarningLimit: 700,
+    // xterm.js plus all level content is needed up front; ~225 KB gzipped is acceptable for a
+    // self-contained offline game with no code-splitting.
+    chunkSizeWarningLimit: 800,
   },
   test: {
     include: ['tests/**/*.test.ts'],

@@ -4,6 +4,7 @@ import './styles/tokens.css';
 import './styles/layout.css';
 import { createCommandRegistry } from './engine/commands';
 import { Game } from './engine/game';
+import { strings } from './content/strings';
 import { LEVELS } from './levels';
 import { runBootSequence } from './ui/BootSequence';
 import { el, isTouchDevice, on } from './ui/dom';
@@ -51,8 +52,11 @@ async function main(): Promise<void> {
   }
 
   const registry = createCommandRegistry();
-  const terminalPane = el('div', { class: 'terminal-pane' });
-  const terminalHost = el('div', { class: 'terminal-host' });
+  const terminalPane = el('div', { class: 'terminal-pane', attrs: { dir: 'ltr' } });
+  const terminalHost = el('div', {
+    class: 'terminal-host',
+    attrs: { role: 'group', 'aria-label': strings('en').a11y.terminalLabel, tabindex: '-1' },
+  });
   terminalPane.append(terminalHost);
 
   // Build the game; its stdout/stderr flow to the terminal we are about to create.
@@ -77,11 +81,45 @@ async function main(): Promise<void> {
   const panels = new Panels(game);
   panels.setFocusTerminal(() => term.focus());
 
-  const toggle = el('button', { class: 'panel-toggle', type: 'button', text: '☰ Mission' });
-  on(toggle, 'click', () => panels.root.classList.toggle('collapsed'));
+  // Applies the current language to the whole document; the terminal pane is forced LTR in CSS.
+  const applyLocale = (): void => {
+    const ui = strings(game.locale);
+    document.documentElement.lang = game.locale;
+    document.documentElement.dir = ui.dir;
+    terminalHost.setAttribute('aria-label', ui.a11y.terminalLabel);
+    toggle.setAttribute('aria-label', ui.a11y.togglePanel);
+    toggle.textContent = `☰ ${ui.tabs.mission}`;
+    language.textContent = ui.buttons.language;
+    language.setAttribute('aria-label', ui.a11y.languageLabel);
+    skip.textContent = ui.a11y.skipToTerminal;
+  };
 
-  app.append(terminalPane, panels.root, toggle);
-  if (isTouchDevice()) terminalPane.append(createTouchKeys(terminal));
+  // Skip link: first Tab stop, jumps straight to the terminal.
+  const skip = el('a', { class: 'skip-link', attrs: { href: '#panel-body' } });
+  on(skip, 'click', (event) => {
+    event.preventDefault();
+    term.focus();
+  });
+
+  const toggle = el('button', { class: 'panel-toggle', type: 'button' });
+  on(toggle, 'click', () => {
+    const collapsed = panels.root.classList.toggle('collapsed');
+    toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  });
+  toggle.setAttribute('aria-controls', 'panel-body');
+  toggle.setAttribute('aria-expanded', 'true');
+
+  const language = el('button', { class: 'lang-toggle', type: 'button' });
+  on(language, 'click', () => {
+    game.setLocale(game.locale === 'he' ? 'en' : 'he');
+    term.focus();
+  });
+
+  panels.setLocaleChangeHandler(applyLocale);
+  app.append(skip, terminalPane, panels.root, toggle, language);
+  if (isTouchDevice())
+    terminalPane.append(createTouchKeys(terminal, strings(game.locale).a11y.touchKeysLabel));
+  applyLocale();
 
   // Repaint the panel roughly once a second so the timer ticks.
   panels.render();

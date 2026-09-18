@@ -5,23 +5,35 @@ import { clear, el, on } from './dom';
 
 type TabId = 'mission' | 'story' | 'hints' | 'skills';
 
-/** The right-hand side panel: HUD plus Mission / Story / Hints / Skills tabs. */
+const TAB_ORDER: readonly TabId[] = ['mission', 'story', 'hints', 'skills'];
+
+/** The right-hand side panel: HUD plus Mission / Story / Hints / Skills tabs, keyboard-navigable. */
 export class Panels {
   readonly root: HTMLElement;
   private readonly game: Game;
-  private readonly ui: UIStrings;
+  private ui: UIStrings;
   private active: TabId = 'mission';
-  private readonly hud = el('div', { class: 'hud' });
-  private readonly tabBar = el('div', { class: 'tabbar' });
-  private readonly body = el('div', { class: 'panel-body' });
+  private readonly hud = el('div', { class: 'hud', attrs: { role: 'group' } });
+  private readonly tabBar = el('div', { class: 'tabbar', attrs: { role: 'tablist' } });
+  private readonly body = el('div', {
+    class: 'panel-body',
+    id: 'panel-body',
+    attrs: { role: 'tabpanel', tabindex: '0' },
+  });
   private readonly tabButtons = new Map<TabId, HTMLButtonElement>();
   private onFocusTerminal: () => void = () => undefined;
+  private onLocaleChange: () => void = () => undefined;
 
   constructor(game: Game) {
     this.game = game;
     this.ui = strings(game.locale);
-    this.root = el('aside', { class: 'panel' }, [this.hud, this.tabBar, this.body]);
+    this.root = el('aside', { class: 'panel', attrs: { 'aria-label': this.ui.a11y.panelLabel } }, [
+      this.hud,
+      this.tabBar,
+      this.body,
+    ]);
     this.buildTabs();
+    this.applyLocale();
     game.subscribe((event) => this.onEvent(event));
   }
 
@@ -29,19 +41,50 @@ export class Panels {
     this.onFocusTerminal = fn;
   }
 
+  /** Lets main.ts react to a language switch (set document dir/lang, redraw the toggle). */
+  setLocaleChangeHandler(fn: () => void): void {
+    this.onLocaleChange = fn;
+  }
+
   private buildTabs(): void {
-    const tabs: [TabId, string][] = [
-      ['mission', this.ui.tabs.mission],
-      ['story', this.ui.tabs.story],
-      ['hints', this.ui.tabs.hints],
-      ['skills', this.ui.tabs.skills],
-    ];
-    for (const [id, label] of tabs) {
-      const button = el('button', { class: 'tab', text: label, type: 'button' });
-      on(button, 'click', () => this.select(id));
+    for (const id of TAB_ORDER) {
+      const button = el('button', {
+        class: 'tab',
+        type: 'button',
+        id: `tab-${id}`,
+        attrs: {
+          role: 'tab',
+          'aria-controls': 'panel-body',
+          'aria-selected': 'false',
+          tabindex: '-1',
+        },
+      });
+      on(button, 'click', () => {
+        this.select(id);
+        button.focus();
+      });
+      on(button, 'keydown', (event) => this.onTabKey(event, id));
       this.tabButtons.set(id, button);
       this.tabBar.append(button);
     }
+  }
+
+  /** Arrow keys move between tabs (WAI-ARIA tablist pattern); Home/End jump to the ends. */
+  private onTabKey(event: KeyboardEvent, id: TabId): void {
+    const index = TAB_ORDER.indexOf(id);
+    let next = -1;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
+      next = (index + 1) % TAB_ORDER.length;
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
+      next = (index - 1 + TAB_ORDER.length) % TAB_ORDER.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = TAB_ORDER.length - 1;
+    if (next < 0) return;
+    event.preventDefault();
+    const target = TAB_ORDER[next];
+    if (target === undefined) return;
+    this.select(target);
+    this.tabButtons.get(target)?.focus();
   }
 
   private select(id: TabId): void {
@@ -52,13 +95,38 @@ export class Panels {
   private onEvent(event: GameEvent): void {
     if (event.type === 'hint-revealed') this.active = 'hints';
     if (event.type === 'flag-captured') this.active = 'mission';
+    if (event.type === 'locale-changed') {
+      this.ui = strings(this.game.locale);
+      this.applyLocale();
+      this.onLocaleChange();
+    }
     this.render();
+  }
+
+  /** Applies the current locale's direction and labels to the panel container and tab labels. */
+  private applyLocale(): void {
+    this.root.setAttribute('aria-label', this.ui.a11y.panelLabel);
+    this.root.setAttribute('dir', this.ui.dir);
+    this.hud.setAttribute('aria-label', this.ui.a11y.hudLabel);
+    this.tabBar.setAttribute('aria-label', this.ui.a11y.tabsLabel);
+    const labels: Record<TabId, string> = {
+      mission: this.ui.tabs.mission,
+      story: this.ui.tabs.story,
+      hints: this.ui.tabs.hints,
+      skills: this.ui.tabs.skills,
+    };
+    for (const [id, button] of this.tabButtons) button.textContent = labels[id];
   }
 
   render(): void {
     this.renderHud();
-    for (const [id, button] of this.tabButtons)
-      button.classList.toggle('active', id === this.active);
+    for (const [id, button] of this.tabButtons) {
+      const selected = id === this.active;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-selected', selected ? 'true' : 'false');
+      button.setAttribute('tabindex', selected ? '0' : '-1');
+    }
+    this.body.setAttribute('aria-labelledby', `tab-${this.active}`);
     clear(this.body);
     switch (this.active) {
       case 'mission':
@@ -82,7 +150,11 @@ export class Panels {
     const stat = (label: string, value: string): HTMLElement =>
       el('div', { class: 'stat' }, [
         el('span', { class: 'stat-label', text: label }),
-        el('span', { class: 'stat-value', text: value }),
+        el('span', {
+          class: 'stat-value',
+          text: value,
+          attrs: { 'aria-label': `${label}: ${value}` },
+        }),
       ]);
     const minutes = Math.floor(status.elapsedMs / 60000);
     const seconds = Math.floor((status.elapsedMs % 60000) / 1000);
@@ -99,18 +171,18 @@ export class Panels {
     const container = el('div', { class: 'view' });
     container.append(
       el('h2', { text: `${mission.number}. ${mission.title}` }),
-      el('div', { class: 'chapter-tag', text: `Chapter ${mission.chapter}` }),
+      el('div', { class: 'chapter-tag', text: `${this.ui.panel.chapter} ${mission.chapter}` }),
       el('h3', { text: this.ui.panel.objective }),
       el('p', { class: 'objective', text: mission.objective }),
       el('h3', { text: this.ui.panel.skillsThisLevel }),
       el(
         'ul',
         { class: 'skill-list' },
-        mission.skills.map((skill) => el('li', { text: skill })),
+        mission.skills.map((skill) => el('li', { attrs: { dir: 'ltr' } }, [skill])),
       ),
     );
     if (mission.completed)
-      container.append(el('div', { class: 'captured-badge', text: '✓ Captured' }));
+      container.append(el('div', { class: 'captured-badge', text: this.ui.panel.captured }));
     return container;
   }
 
@@ -133,7 +205,7 @@ export class Panels {
       revealed.forEach((text, index) => {
         container.append(
           el('div', { class: 'hint' }, [
-            el('span', { class: 'hint-number', text: `Hint ${index + 1}` }),
+            el('span', { class: 'hint-number', text: `${this.ui.panel.hint} ${index + 1}` }),
             el('p', { text }),
           ]),
         );
@@ -144,7 +216,7 @@ export class Panels {
       const button = el('button', {
         class: 'reveal-hint',
         type: 'button',
-        text: `${this.ui.panel.revealHint} (−${cost} pts)`,
+        text: `${this.ui.panel.revealHint} (−${cost})`,
       });
       on(button, 'click', () => {
         this.game.nextHint();
@@ -166,7 +238,7 @@ export class Panels {
         el(
           'ul',
           { class: 'skill-list unlocked' },
-          unlocked.map((skill) => el('li', { text: skill })),
+          unlocked.map((skill) => el('li', { attrs: { dir: 'ltr' } }, [skill])),
         ),
       );
     }

@@ -10,6 +10,31 @@
   overflow: hidden;
 }
 
+/* Keyboard focus is always clearly visible; pointer focus (‑visible) is not forced. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A skip link that only appears when focused, as the first Tab stop. */
+.skip-link {
+  position: fixed;
+  inset-block-start: -60px;
+  inset-inline-start: 8px;
+  z-index: 30;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: #05080a;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: inherit;
+  transition: inset-block-start 0.15s ease;
+}
+
+.skip-link:focus {
+  inset-block-start: 8px;
+}
+
 .terminal-pane {
   flex: 1 1 70%;
   min-width: 0;
@@ -17,6 +42,8 @@
   flex-direction: column;
   background: var(--bg);
   border-inline-end: 1px solid #10201a;
+  /* The terminal is always left-to-right, even when the UI is Hebrew (RTL). */
+  direction: ltr;
 }
 
 .terminal-host {
@@ -218,6 +245,28 @@
   font-size: 14px;
 }
 
+/* The language toggle sits opposite the panel toggle, always available. */
+.lang-toggle {
+  position: fixed;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 20;
+  min-height: 36px;
+  padding: 6px 12px;
+  background: #0d1a14;
+  border: 1px solid #1c3a2c;
+  color: var(--fg);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .panel-toggle {
   display: none;
 }
@@ -231,11 +280,16 @@
     flex: 1 1 auto;
     border-inline-end: none;
   }
+  .terminal-host {
+    /* Leave room for the fixed toggles at the top and the on-screen keys at the bottom. */
+    padding-block-start: 52px;
+  }
   .panel {
     flex: 0 0 auto;
     max-width: none;
     max-height: 45dvh;
     border-block-start: 1px solid #10201a;
+    padding-block-end: env(safe-area-inset-bottom);
   }
   .panel.collapsed {
     max-height: 0;
@@ -243,24 +297,45 @@
   }
   .touch-keys {
     display: flex;
+    padding-block-end: calc(6px + env(safe-area-inset-bottom));
   }
   .panel-toggle {
     display: block;
     position: fixed;
     inset-block-start: 8px;
     inset-inline-end: 8px;
-    z-index: 10;
-    padding: 8px 12px;
+    z-index: 20;
+    min-height: 36px;
+    padding: 6px 12px;
     background: #0d1a14;
     border: 1px solid var(--accent);
     color: var(--accent);
     border-radius: 4px;
     font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  /* Roomier tap targets on touch screens. */
+  .tab {
+    padding-block: 14px;
+  }
+  .touch-key {
+    min-height: 44px;
+  }
+}
+
+/* Very narrow phones: two-column HUD so the numbers stay readable. */
+@media (max-width: 420px) {
+  .hud {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .xterm .xterm-cursor-blink {
     animation: none !important;
+  }
+  .skip-link {
+    transition: none;
   }
 }

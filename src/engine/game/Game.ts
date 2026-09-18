@@ -64,7 +64,7 @@ export class Game {
   private machineInstance!: Machine;
   private networkInstance!: Network;
   private currentLevel!: Level;
-  private revealed: string[] = [];
+  private revealedCount = 0;
   private wrongThisLevel = 0;
   private readonly onceKeys = new Set<string>();
   private pending: PendingAction = null;
@@ -219,7 +219,7 @@ export class Game {
     if (!entry || isStub(entry)) throw new Error(`cannot load level: ${id}`);
     const level = entry;
     this.currentLevel = level;
-    this.revealed = [];
+    this.revealedCount = 0;
     this.wrongThisLevel = 0;
     this.onceKeys.clear();
     this.activeAccum = this.save.progress[id]?.activeMs ?? 0;
@@ -250,9 +250,7 @@ export class Game {
       session?.levelId === id && session.contentHash === this.contentHash(level) ? session : null;
     if (restore) {
       this.machineInstance.fs.root.children = deserializeRoot(restore.fs).children;
-      this.revealed = level.hints
-        .slice(0, restore.hintsUsed)
-        .map((hint) => localize(hint, this.locale));
+      this.revealedCount = restore.hintsUsed;
       this.wrongThisLevel = restore.wrongSubmissions;
       this.activeAccum = restore.activeMs;
     }
@@ -293,7 +291,7 @@ export class Game {
       fs: serializeNode(this.machineInstance.fs.root),
       shells: shell.sessions,
       history: shell.history,
-      hintsUsed: this.revealed.length,
+      hintsUsed: this.revealedCount,
       activeMs: this.activeMs(),
       wrongSubmissions: this.wrongThisLevel,
     };
@@ -317,7 +315,7 @@ export class Game {
   async persist(): Promise<void> {
     const progress = this.progressFor(this.currentLevel.id);
     if (progress.completedAt === undefined) {
-      progress.hintsUsed = this.revealed.length;
+      progress.hintsUsed = this.revealedCount;
       progress.activeMs = this.activeMs();
       progress.wrongSubmissions = this.wrongThisLevel;
     }
@@ -341,7 +339,7 @@ export class Game {
       objective: localize(level.objective, this.locale),
       briefing: localize(level.briefing, this.locale),
       skills: level.skills,
-      hintsUsed: this.revealed.length,
+      hintsUsed: this.revealedCount,
       hintsTotal: level.hints.length,
       completed: this.isCompleted(level.id),
     };
@@ -358,11 +356,11 @@ export class Game {
       await this.persist();
       return { status: 'incorrect' };
     }
-    const score = computeScore(this.revealed.length, this.activeMs(), level.parTimeSec);
+    const score = computeScore(this.revealedCount, this.activeMs(), level.parTimeSec);
     const progress = this.progressFor(level.id);
     progress.completedAt = new Date(STORY_EPOCH + this.activeMs()).toISOString();
     progress.score = score;
-    progress.hintsUsed = this.revealed.length;
+    progress.hintsUsed = this.revealedCount;
     progress.activeMs = this.activeMs();
 
     const newSkills = level.skills.filter((skill) => !this.save.unlockedSkills.includes(skill));
@@ -378,20 +376,30 @@ export class Game {
 
   nextHint(): HintResult {
     const level = this.currentLevel;
-    if (this.revealed.length >= level.hints.length) {
+    if (this.revealedCount >= level.hints.length) {
       return { status: 'exhausted', total: level.hints.length };
     }
-    const index = this.revealed.length;
+    const index = this.revealedCount;
     const text = localize(level.hints[index] ?? '', this.locale);
-    this.revealed.push(text);
-    this.progressFor(level.id).hintsUsed = this.revealed.length;
+    this.revealedCount += 1;
+    this.progressFor(level.id).hintsUsed = this.revealedCount;
     void this.persist();
     this.emit({ type: 'hint-revealed', levelId: level.id, index, total: level.hints.length });
     return { status: 'hint', index, total: level.hints.length, text };
   }
 
   revealedHints(): readonly string[] {
-    return this.revealed;
+    return this.currentLevel.hints
+      .slice(0, this.revealedCount)
+      .map((hint) => localize(hint, this.locale));
+  }
+
+  /** Switches the UI language. Re-localizes on the fly; terminal command output stays English. */
+  setLocale(locale: 'en' | 'he'): void {
+    if (this.save.settings.locale === locale) return;
+    this.save.settings.locale = locale;
+    void this.persist();
+    this.emit({ type: 'locale-changed', locale });
   }
 
   status(): StatusInfo {
@@ -408,7 +416,7 @@ export class Game {
       number: this.levelNumber(level.id),
       title: localize(level.title, this.locale),
       chapter: level.chapter,
-      hintsUsed: this.revealed.length,
+      hintsUsed: this.revealedCount,
       hintsTotal: level.hints.length,
       elapsedMs: this.activeMs(),
       wrongSubmissions: this.wrongThisLevel,
@@ -450,7 +458,7 @@ export class Game {
         chapter: level.chapter,
         title: localize(level.title, this.locale),
         completed,
-        hintsUsed: live ? this.revealed.length : (progress?.hintsUsed ?? 0),
+        hintsUsed: live ? this.revealedCount : (progress?.hintsUsed ?? 0),
         elapsedMs: live ? this.activeMs() : (progress?.activeMs ?? 0),
         score: progress?.score?.total ?? 0,
       };

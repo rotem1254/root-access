@@ -72,6 +72,8 @@ export class Terminal {
       lineHeight: 1.2,
       theme: THEME,
       scrollback: 5000,
+      // Mirrors output into an ARIA live region so screen readers announce it.
+      screenReaderMode: true,
     });
     this.xterm.loadAddon(this.fit);
     this.xterm.loadAddon(new WebLinksAddon((_event, uri) => this.openLink(uri)));

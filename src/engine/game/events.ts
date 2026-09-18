@@ -15,6 +15,7 @@ export type GameEvent =
     }
   | { type: 'level-reset'; levelId: string }
   /** Every playable level has been captured. */
-  | { type: 'run-complete'; totalScore: number };
+  | { type: 'run-complete'; totalScore: number }
+  | { type: 'locale-changed'; locale: 'en' | 'he' };
 
 export type GameListener = (event: GameEvent) => void;
