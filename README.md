@@ -1,5 +1,7 @@
 # ROOT_ACCESS
 
+**Live:** https://root-access-rotems-projects-63447f6c.vercel.app · **Repo:** github.com/rotem1254/root-access (pushes to `main` auto-deploy)
+
 A browser-based, text-based hacking puzzle game. The player works inside a simulated Linux terminal
 and solves real challenges — Linux, permissions, log analysis, cryptography, networking — to capture
 flags and progress through a story. It is built for pre-military cyber cadets (~17–19): every puzzle
