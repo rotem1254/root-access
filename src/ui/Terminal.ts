@@ -49,7 +49,11 @@ function visibleLength(text: string): number {
 export class Terminal {
   readonly xterm: XTerm;
   private readonly fit = new FitAddon();
-  private readonly shell: Shell;
+  /**
+   * Resolved on every use: the Game builds a fresh Shell for each level, so holding the instance
+   * would leave the terminal driving the previous level's shell after a level change.
+   */
+  private readonly currentShell: () => Shell;
   private editor: LineEditor;
   private secret = false;
   /** Cursor row within the current input block, remembered so we can repaint in place. */
@@ -57,9 +61,9 @@ export class Terminal {
   private rendered = false;
   private disposers: (() => void)[] = [];
 
-  constructor(shell: Shell) {
-    this.shell = shell;
-    this.editor = new LineEditor(shell.history);
+  constructor(shell: Shell | (() => Shell)) {
+    this.currentShell = typeof shell === 'function' ? shell : (): Shell => shell;
+    this.editor = new LineEditor(this.shell.history);
     this.xterm = new XTerm({
       convertEol: true,
       cursorBlink: true,
@@ -71,6 +75,10 @@ export class Terminal {
     });
     this.xterm.loadAddon(this.fit);
     this.xterm.loadAddon(new WebLinksAddon((_event, uri) => this.openLink(uri)));
+  }
+
+  private get shell(): Shell {
+    return this.currentShell();
   }
 
   /** Mounts the terminal, injecting xterm's stylesheet once. */

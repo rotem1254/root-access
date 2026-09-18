@@ -256,3 +256,29 @@ describe('ssh', () => {
     expect((await ws.run('ssh admin@nope')).stderr).toContain('Could not resolve hostname');
   });
 });
+
+describe('non-ASCII page content', () => {
+  it('serves UTF-8 text without double-encoding it', async () => {
+    const HOST: HostDefinition = {
+      hostname: 'unicode-host',
+      users: [{ name: 'guest', uid: 1000 }],
+      net: {
+        interfaces: [{ name: 'eth0', ip: '10.10.0.7' }],
+        ports: [
+          {
+            port: 80,
+            http: { routes: { '/': { body: 'NovaCorp — export — ✓ résumé\n' } } },
+          },
+        ],
+      },
+    };
+    const h = createHarness({ commands: LINUX_COMMANDS, host: HOST, user: 'guest' });
+    // Regression: a sealed (byte-string) body was UTF-8 encoded a second time, so "—" printed as "â".
+    const fetched = await h.run('curl http://10.10.0.7/');
+    expect(fetched.stdout).toBe('NovaCorp — export — ✓ résumé\n');
+    // Regression: a URL path of "/" saved to "/" instead of index.html.
+    expect((await h.run('wget -q http://10.10.0.7/')).status).toBe(0);
+    expect((await h.run('cat index.html')).stdout).toBe('NovaCorp — export — ✓ résumé\n');
+    expect((await h.run('wget -q http://10.10.0.7/notes.txt')).status).toBe(8);
+  });
+});

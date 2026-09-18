@@ -1,11 +1,15 @@
 import { base64Decode } from '../util/base64';
-import { utf8Encode } from '../util/bytes';
+import { type ByteString, utf8Encode } from '../util/bytes';
 import { isSealed, unseal } from '../util/seal';
 import type { HttpRoute, HttpSite } from './types';
 
-/** A route body may be sealed so a flag in a page never appears as plaintext in the bundle. */
-function bodyOf(route: HttpRoute): string {
-  return isSealed(route.body) ? unseal(route.body) : route.body;
+/**
+ * A route body as bytes. A sealed body (used so a flag in a page never appears as plaintext in the
+ * bundle) is already a byte string; an author-written string is UTF-8 encoded here. Returning bytes
+ * keeps callers from encoding twice, which mangled every non-ASCII character.
+ */
+function bodyOf(route: HttpRoute): ByteString {
+  return isSealed(route.body) ? unseal(route.body) : utf8Encode(route.body);
 }
 
 export interface HttpRequest {
@@ -18,7 +22,8 @@ export interface HttpResponse {
   status: number;
   statusText: string;
   headers: Record<string, string>;
-  body: string;
+  /** Byte string, ready to write to a terminal or a file without further encoding. */
+  body: ByteString;
 }
 
 const STATUS_TEXT: Readonly<Record<number, string>> = {
@@ -63,7 +68,9 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
       status: 404,
       statusText: statusText(404),
       headers: baseHeaders(),
-      body: `<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr><center>${server}</center>\n</body>\n</html>\n`,
+      body: utf8Encode(
+        `<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr><center>${server}</center>\n</body>\n</html>\n`,
+      ),
     };
   }
   if (route.auth) {
@@ -73,13 +80,15 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
         status: 401,
         statusText: statusText(401),
         headers: { ...baseHeaders(), 'WWW-Authenticate': `Basic realm="${route.auth.realm}"` },
-        body: '<html>\n<head><title>401 Authorization Required</title></head>\n<body>\n<center><h1>401 Authorization Required</h1></center>\n</body>\n</html>\n',
+        body: utf8Encode(
+          '<html>\n<head><title>401 Authorization Required</title></head>\n<body>\n<center><h1>401 Authorization Required</h1></center>\n</body>\n</html>\n',
+        ),
       };
     }
   }
   const status = route.status ?? 200;
   const headers: Record<string, string> = { ...baseHeaders(), ...route.headers };
   const body = bodyOf(route);
-  headers['Content-Length'] = String(utf8Encode(body).length);
+  headers['Content-Length'] = String(body.length);
   return { status, statusText: statusText(status), headers, body };
 }

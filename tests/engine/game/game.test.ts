@@ -244,4 +244,18 @@ describe('Game persistence', () => {
     expect((await h.run(`submit ${FLAG1}`)).stdout).toContain('already captured');
     expect(h.game.status().completed).toBe(true);
   });
+  it('builds a fresh Shell for each level, so the UI must never cache the instance', async () => {
+    const h = await createGame(CATALOG);
+    const firstShell = h.game.shell;
+    const firstMachine = h.game.machine;
+    await h.run(`submit ${FLAG1}`);
+    await h.run('levels 2');
+    expect(h.game.level.id).toBe('02-second');
+    // Regression: the terminal used to hold the constructor-time Shell and kept driving the
+    // previous level's machine after a level change.
+    expect(h.game.shell).not.toBe(firstShell);
+    expect(h.game.machine).not.toBe(firstMachine);
+    expect(h.game.shell.session.machine).toBe(h.game.machine);
+    expect(h.game.shell.inputRequest.kind).not.toBe('busy');
+  });
 });

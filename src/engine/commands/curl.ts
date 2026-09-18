@@ -1,6 +1,5 @@
 import { base64Encode } from '../util/base64';
 import { serveHttp, statusText } from '../network/http';
-import { utf8Encode } from '../util/bytes';
 import { parseOptions } from './args';
 import { defineCommand } from './define';
 
@@ -120,14 +119,14 @@ export const curl = defineCommand({
     const output = o.value('output');
     if (output !== undefined && output !== '-') {
       try {
-        ctx.fs.writeFile(output, utf8Encode(response.body));
+        ctx.fs.writeFile(output, response.body);
       } catch {
         ctx.stderr(`curl: (23) Failed writing body\n`);
         return 23;
       }
       return 0;
     }
-    ctx.stdout(utf8Encode(response.body));
+    ctx.stdout(response.body);
     return 0;
   },
 });

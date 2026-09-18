@@ -1,6 +1,5 @@
 import { serveHttp } from '../network/http';
 import { basename } from '../fs/path';
-import { utf8Encode } from '../util/bytes';
 import { parseOptions } from './args';
 import { defineCommand } from './define';
 
@@ -74,12 +73,14 @@ export const wget = defineCommand({
     });
     const quiet = o.has('quiet');
     const output = o.value('output-document');
-    const bytes = utf8Encode(response.body);
+    const bytes = response.body;
     if (output === '-') {
       ctx.stdout(response.body);
       return 0;
     }
-    const filename = output ?? (basename(url.path) || 'index.html');
+    // A URL path of "/" (or any directory path) saves as index.html, as real wget does.
+    const base = url.path.endsWith('/') ? '' : basename(url.path);
+    const filename = output ?? (base === '' || base === '/' ? 'index.html' : base);
     if (!quiet) {
       ctx.stderr(
         `--2026-03-14 09:00:00--  ${rawUrl}\nResolving ${url.host} (${url.host})... ${ip}\n`,
