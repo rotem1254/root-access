@@ -1,4 +1,4 @@
-import type { LevelCatalog } from '../engine/game/level';
+import { type Level, type LevelCatalog, type Localized } from '../engine/game/level';
 import { level01 } from './level01';
 import { level02 } from './level02';
 import { level03 } from './level03';
@@ -14,6 +14,27 @@ import { level12 } from './level12';
 import { level13 } from './level13';
 import { level14 } from './level14';
 import { level15 } from './level15';
+import { HE } from './translations.he';
+
+const english = (value: Localized): string => (typeof value === 'string' ? value : value.en);
+
+/** Pairs an English value with its Hebrew translation into a Localized value. */
+const bi = (value: Localized, he: string | undefined): Localized =>
+  he === undefined ? value : { en: english(value), he };
+
+/** Merges the Hebrew translations onto a level, leaving the level files English-only. */
+function withHebrew(level: Level): Level {
+  const he = HE[level.id];
+  if (!he) return level;
+  return {
+    ...level,
+    title: bi(level.title, he.title),
+    objective: bi(level.objective, he.objective),
+    briefing: bi(level.briefing, he.briefing),
+    ...(level.debrief !== undefined ? { debrief: bi(level.debrief, he.debrief) } : {}),
+    hints: level.hints.map((hint, index) => bi(hint, he.hints[index])),
+  };
+}
 
 /** The ordered catalog the game plays through. Add a new level by importing it here. */
 export const LEVELS: LevelCatalog = [
@@ -32,4 +53,4 @@ export const LEVELS: LevelCatalog = [
   level13,
   level14,
   level15,
-];
+].map(withHebrew);

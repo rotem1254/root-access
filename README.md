@@ -168,6 +168,16 @@ and the Chapter 5 finale chains recon, injection, decryption and an ssh pivot in
 hosts, addresses and domains are reserved for documentation
 (RFC 5737 / RFC 1918, `.example`, `.internal`) — nothing here points at a real system.
 
+## Language and accessibility
+
+The interface is bilingual: a toggle (top corner) switches the whole UI between English and Hebrew,
+and the page goes right-to-left for Hebrew while the terminal pane stays left-to-right, because the
+commands are real English Linux. Level briefings, objectives and hints are translated
+(`src/levels/translations.he.ts`, merged in `src/levels/index.ts`); terminal command output — bash
+and coreutils errors, man pages — stays English by design, since reading real errors is part of the
+lesson. The panel is a keyboard-navigable ARIA tablist, focus is always visible, there is a
+skip-to-terminal link, and xterm runs in screen-reader mode.
+
 ## Deploying
 
 The app is a static Vite build with no backend, so any static host works. `vercel.json` is included:
