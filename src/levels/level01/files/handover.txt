@@ -1,0 +1,23 @@
+NovaCorp — Security Analyst Handover
+=====================================
+
+Welcome aboard. I'm the analyst you're replacing. I didn't get to finish the
+NovaCorp investigation, so I've left you breadcrumbs across these systems.
+
+Rule one on any box: look at EVERYTHING, including the files that don't show up
+in a plain `ls`. Names that start with a dot are hidden. `ls -la` reveals them.
+You just found this one, so you already know the trick.
+
+The access flag for this level is split in two. Here is the FIRST half:
+
+    FLAG{h1dd3n_1n_
+
+The SECOND half is in memo.txt, but I base64-encoded it so it wouldn't jump out
+at anyone skimming the directory. Decode it with:
+
+    base64 -d memo.txt
+
+Then join the two halves and submit the whole flag with `submit`.
+
+Good hunting.
+— A.

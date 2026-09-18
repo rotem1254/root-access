@@ -1,0 +1,16 @@
+:root {
+  color-scheme: dark;
+  --bg: #05080a;
+  --fg: #c8f7d8;
+  --accent: #39ff88;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+}
