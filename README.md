@@ -5,11 +5,11 @@ and solves real challenges — Linux, permissions, log analysis, cryptography, n
 flags and progress through a story. It is built for pre-military cyber cadets (~17–19): every puzzle
 teaches a genuine, transferable skill that works the same way on a real Linux system.
 
-**This build** delivers the engine, a faithful bash-like shell with ~62 commands, the level and
-scoring system, save/load, the terminal UI, an end-of-run scoring screen, and all three chapters:
-"Initial Access" (3 levels), "Lateral Movement" (4 levels, on a simulated network with ssh
-pivoting) and "Breaking the Cipher" (4 levels of hashing, cracking and encryption) — 11 playable
-levels in total.
+**This is the full game**: the engine, a faithful bash-like shell with ~65 commands, the level and
+scoring system, save/load, the terminal UI, an end-of-run scoring screen, and all five chapters —
+"Initial Access", "Lateral Movement" (a simulated network with ssh pivoting), "Breaking the Cipher"
+(hashing, cracking and encryption), "The Way In" (web: robots.txt, IDOR and SQL injection) and the
+"Root Access" finale that chains them all — **15 playable levels** end to end.
 
 ## Running it
 
@@ -60,6 +60,7 @@ src/
     shell/           lexer, parser, expansion, glob, executor, interactive Shell, completion
     network/         hosts with IPs, DNS, per-interface reachability, services, HTTP, pcap
     crypto/          digests, hash identification, OpenSSL AES container, a simplified GPG
+    web/             a small real SQL engine (so injection works for the right reason)
     commands/        one file per command, a shared Command interface, GNU-style option parsing
       game/          mission, hint, submit, status, reset, levels
     game/            Game orchestrator, level model, scoring, flags, storage, events
@@ -99,6 +100,9 @@ Networking: `ip` (`a`/`route`), `ifconfig`, `ping`, `nmap` (`-p`, `-sV`, `-F`, C
 
 Cryptography: `md5sum`, `sha1sum`, `sha256sum`, `sha512sum` (with `-c`), `xxd`, `tr`, `openssl`
 (`enc`, `dgst`), `john`, `gpg`.
+
+Web: `curl` handles query strings and `-X` / `-d` / `-H` / `-b`, which is enough for the robots.txt,
+IDOR and SQL-injection levels; the injection runs against a small genuine SQL engine.
 
 Game commands: `mission`, `hint`, `submit`, `status`, `summary`, `reset`, `levels`.
 
@@ -158,5 +162,21 @@ Chapter 2 moves onto the network: you map the office LAN, find a service parked 
 pivot through a jump host into a segmented server network, and pull a cleartext credential out of a
 packet capture. Chapter 3 closes the case with cryptography: a checksum manifest exposes a tampered
 delivery, a wordlist breaks a reused password, an AES archive gives up the export itself, and a PGP
-key decrypts the final report. All hosts, addresses and domains are reserved for documentation
+key decrypts the final report. Chapter 4 opens the web surface — a robots.txt that gives the game
+away, an IDOR you walk through by changing an id, and a SQL injection you drive by hand with `curl` —
+and the Chapter 5 finale chains recon, injection, decryption and an ssh pivot into one attack. All
+hosts, addresses and domains are reserved for documentation
 (RFC 5737 / RFC 1918, `.example`, `.internal`) — nothing here points at a real system.
+
+## Deploying
+
+The app is a static Vite build with no backend, so any static host works. `vercel.json` is included:
+
+```bash
+npm run build      # outputs dist/, and fails if any plaintext flag leaks in
+npx vercel deploy  # or point any static host at dist/
+```
+
+The production build injects a strict Content-Security-Policy (`connect-src 'none'`, so the page
+cannot make network requests — everything is simulated), and `vercel.json` adds `nosniff`,
+`X-Frame-Options: DENY` and a long cache for hashed assets.

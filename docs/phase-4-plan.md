@@ -11,6 +11,15 @@ AND/OR, parentheses, literals, `--` comments, UNION SELECT). The injection works
 text really changes — any valid payload works, not a scripted one — and a broken payload produces a
 real syntax error, which is itself how you discover the flaw.
 
+## Progress
+
+- [x] 1. Mini SQL engine (tokenizer, parser, evaluator, UNION, MySQL errors)
+- [x] 2. Dynamic HTTP (query string, body, headers, handler routes)
+- [x] 3. curl for web work (-X, -d, -H, -b, query strings)
+- [x] 4. Chapter 4 "The Way In" (robots.txt, IDOR, SQL injection)
+- [x] 5. Chapter 5 "Root Access" finale (the full chain)
+- [x] 6. Polish and deploy (vercel.json, README, Phase 4 report)
+
 ## Steps
 
 1. **Mini SQL engine** (`src/engine/web/sql.ts`) — tokenizer, parser and evaluator over in-memory
