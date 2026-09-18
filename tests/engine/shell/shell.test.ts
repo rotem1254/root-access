@@ -557,7 +557,9 @@ describe('Shell: sessions', () => {
     await fresh.run('leave');
     expect(fresh.shell.session.env.get('X')).toBe('42');
     fresh.shell.restore({
-      sessions: [{ user: 'ghost', login: true, cwd: '/', lastStatus: 0, vars: [] }],
+      sessions: [
+        { host: 'corp-web01', user: 'ghost', login: true, cwd: '/', lastStatus: 0, vars: [] },
+      ],
       history: [],
     });
     expect(fresh.shell.session.user.name).toBe('guest');

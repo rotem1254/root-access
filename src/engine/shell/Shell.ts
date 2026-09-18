@@ -2,6 +2,7 @@ import type { CommandRegistry, ShellAPI, SubprocessIO } from '../commands/types'
 import { tildify } from '../fs/path';
 import { ROOT_CREDENTIALS } from '../fs/permissions';
 import type { GameAPI } from '../game/api';
+import type { Network } from '../network/Network';
 import type { Machine } from '../system/Machine';
 import type { UserRecord } from '../system/UserDB';
 import { type ByteString, utf8Encode } from '../util/bytes';
@@ -39,7 +40,9 @@ export interface ShellHooks {
 }
 
 export interface ShellOptions {
-  machine: Machine;
+  network: Network;
+  /** Hostname of the machine the player starts on. */
+  host: string;
   registry: CommandRegistry;
   io: ShellIO;
   game: GameAPI;
@@ -53,6 +56,7 @@ export interface ShellOptions {
 }
 
 export interface SessionSnapshot {
+  host: string;
   user: string;
   login: boolean;
   cwd: string;
@@ -69,14 +73,16 @@ const HISTORY_LIMIT = 1000;
 
 /**
  * An interactive bash session on a machine: reads lines, keeps history, runs commands, handles
- * Ctrl+C / Ctrl+D, and nests shells for `su`. The UI and the headless test harness drive it the
- * same way, through `submit`, `interrupt` and `eof`.
+ * Ctrl+C / Ctrl+D, and nests shells for `su` and `ssh`. The UI and the headless test harness drive
+ * it the same way, through `submit`, `interrupt` and `eof`.
  */
 export class Shell implements ExecutionHost {
-  readonly machine: Machine;
+  readonly network: Network;
   readonly registry: CommandRegistry;
   readonly game: GameAPI;
   readonly internalErrors: string[] = [];
+  private readonly primaryMachine: Machine;
+  private readonly startUser: UserRecord;
   private readonly io: ShellIO;
   private readonly hooks: ShellHooks;
   private readonly sleepImpl: (ms: number) => Promise<void>;
@@ -94,7 +100,7 @@ export class Shell implements ExecutionHost {
   private nextPid = 2300;
 
   constructor(options: ShellOptions) {
-    this.machine = options.machine;
+    this.network = options.network;
     this.registry = options.registry;
     this.game = options.game;
     this.io = options.io;
@@ -103,9 +109,13 @@ export class Shell implements ExecutionHost {
     this.historyList = [...(options.history ?? [])];
     this.rng = createRandom(options.seed ?? 1337);
     this.executor = new Executor(this);
-    const user = this.machine.users.byName(options.user);
+    const machine = this.network.machineByHostname(options.host);
+    if (!machine) throw new Error(`unknown start host: ${options.host}`);
+    this.primaryMachine = machine;
+    const user = machine.users.byName(options.user);
     if (!user) throw new Error(`unknown start user: ${options.user}`);
-    this.sessions.push(this.newSession(user, true, options.cwd));
+    this.startUser = user;
+    this.sessions.push(this.newSession(machine, user, true, options.cwd));
     this.request = this.promptRequest();
   }
 
@@ -115,6 +125,11 @@ export class Shell implements ExecutionHost {
     const session = this.sessions[this.sessions.length - 1];
     if (!session) throw new Error('shell has no session');
     return session;
+  }
+
+  /** The machine the current session is running on. */
+  get machine(): Machine {
+    return this.session.machine;
   }
 
   get depth(): number {
@@ -139,16 +154,16 @@ export class Shell implements ExecutionHost {
 
   /** PS1, colored like Ubuntu's default: `guest@corp-web01:~/docs$ `. */
   prompt(): string {
-    const { user, env } = this.session;
+    const { user, env, machine } = this.session;
     const dir = tildify(env.cwd, env.get('HOME') ?? '');
     const sigil = user.uid === 0 ? '#' : '$';
-    return `\x1b[01;32m${user.name}@${this.machine.hostname}\x1b[00m:\x1b[01;34m${dir}\x1b[00m${sigil} `;
+    return `\x1b[01;32m${user.name}@${machine.hostname}\x1b[00m:\x1b[01;34m${dir}\x1b[00m${sigil} `;
   }
 
-  /** /etc/motd, printed when a login session starts. */
+  /** /etc/motd of the current machine, printed when a login session starts. */
   motd(): ByteString {
     try {
-      return this.machine.fs.readFile('/etc/motd', ROOT_CREDENTIALS);
+      return this.session.machine.fs.readFile('/etc/motd', ROOT_CREDENTIALS);
     } catch {
       return '';
     }
@@ -333,18 +348,25 @@ export class Shell implements ExecutionHost {
 
   // ── Sessions ────────────────────────────────────────────────────────────
 
-  private newSession(user: UserRecord, login: boolean, cwd?: string, env?: Environment): Session {
-    const environment = env ?? this.loginEnvironment(user);
+  private newSession(
+    machine: Machine,
+    user: UserRecord,
+    login: boolean,
+    cwd?: string,
+    env?: Environment,
+  ): Session {
+    const environment = env ?? this.loginEnvironmentOn(machine, user);
     if (cwd !== undefined) {
       environment.cwd = cwd;
       environment.set('PWD', cwd);
     }
     this.nextPid += 17;
-    return { user, env: environment, login, pid: this.nextPid };
+    return { machine, user, env: environment, login, pid: this.nextPid };
   }
 
-  loginEnvironment(user: UserRecord): Environment {
-    const home = this.machine.fs.exists(user.home, this.machine.users.credentials(user), true)
+  /** The environment a fresh login shell for `user` on `machine` starts with. */
+  private loginEnvironmentOn(machine: Machine, user: UserRecord): Environment {
+    const home = machine.fs.exists(user.home, machine.users.credentials(user), true)
       ? user.home
       : '/';
     const env = new Environment(home, {
@@ -358,7 +380,7 @@ export class Shell implements ExecutionHost {
       SHLVL: '1',
       PATH: USER_PATH,
     });
-    env.set('HOSTNAME', this.machine.hostname);
+    env.set('HOSTNAME', machine.hostname);
     env.set('BASH_VERSION', BASH_VERSION);
     env.set('HISTCONTROL', 'ignoreboth');
     env.set('HISTSIZE', '1000');
@@ -366,6 +388,10 @@ export class Shell implements ExecutionHost {
     env.set('UID', String(user.uid));
     env.set('EUID', String(user.uid));
     return env;
+  }
+
+  loginEnvironment(user: UserRecord): Environment {
+    return this.loginEnvironmentOn(this.session.machine, user);
   }
 
   /** `su` without `-`: keep the environment and directory, but switch HOME, SHELL, USER, LOGNAME. */
@@ -387,19 +413,31 @@ export class Shell implements ExecutionHost {
   pushSession(user: UserRecord, options: { login: boolean }): void {
     const env = options.login ? this.loginEnvironment(user) : this.suEnvironment(user);
     if (options.login) env.set('SHLVL', String(this.sessions.length + 1));
-    this.sessions.push(this.newSession(user, options.login, undefined, env));
+    this.sessions.push(this.newSession(this.session.machine, user, options.login, undefined, env));
+    this.hooks.onSessionChange?.();
+  }
+
+  /** `ssh`: start a login shell as `user` on another machine. */
+  sshTo(machine: Machine, user: UserRecord): void {
+    const env = this.loginEnvironmentOn(machine, user);
+    env.set('SHLVL', String(this.sessions.length + 1));
+    this.sessions.push(this.newSession(machine, user, true, undefined, env));
     this.hooks.onSessionChange?.();
   }
 
   private exitSession(status: number): void {
+    const leaving = this.session;
     if (this.sessions.length > 1) {
       this.sessions.pop();
+      // Leaving an ssh session prints the standard closing line.
+      if (leaving.machine !== this.session.machine) {
+        this.io.stdout(`Connection to ${leaving.machine.hostname} closed.\n`);
+      }
       this.session.env.lastStatus = status;
     } else {
-      const user = this.session.user;
-      this.io.stdout(`Connection to ${this.machine.hostname} closed.\n\n`);
+      this.io.stdout(`Connection to ${this.primaryMachine.hostname} closed.\n\n`);
       this.sessions.pop();
-      this.sessions.push(this.newSession(user, true));
+      this.sessions.push(this.newSession(this.primaryMachine, this.startUser, true));
       this.io.stdout(this.motd());
     }
     this.hooks.onSessionChange?.();
@@ -415,6 +453,7 @@ export class Shell implements ExecutionHost {
       depth: this.sessions.length,
       isLoginShell: session.login,
       pushSession: (user, options) => this.pushSession(user, options),
+      sshTo: (machine, user) => this.sshTo(machine, user),
       exit: (status) => {
         this.lineAbortedFlag = true;
         if (this.sessions.includes(session)) this.exitSession(status);
@@ -423,7 +462,7 @@ export class Shell implements ExecutionHost {
       runAs: (user, path, argv, io, env) =>
         this.executor.runSimple(
           { assignments: [], words: argv.map(literalWord), redirects: [] },
-          { user, env, login: false, pid: this.nextPid + 1 },
+          { machine: session.machine, user, env, login: false, pid: this.nextPid + 1 },
           this.subprocessIO(io),
           path,
         ),
@@ -437,7 +476,13 @@ export class Shell implements ExecutionHost {
           );
           return 2;
         }
-        const child: Session = { user, env, login: false, pid: this.nextPid + 1 };
+        const child: Session = {
+          machine: session.machine,
+          user,
+          env,
+          login: false,
+          pid: this.nextPid + 1,
+        };
         const status = await this.executor.runList(result.list, child, this.subprocessIO(io));
         this.lineAbortedFlag = false;
         return status;
@@ -459,6 +504,7 @@ export class Shell implements ExecutionHost {
   snapshot(): ShellSnapshot {
     return {
       sessions: this.sessions.map((session) => ({
+        host: session.machine.hostname,
         user: session.user.name,
         login: session.login,
         cwd: session.env.cwd,
@@ -474,12 +520,13 @@ export class Shell implements ExecutionHost {
   restore(snapshot: ShellSnapshot): void {
     const restored: Session[] = [];
     for (const saved of snapshot.sessions) {
-      const user = this.machine.users.byName(saved.user);
+      const machine = this.network.machineByHostname(saved.host) ?? this.primaryMachine;
+      const user = machine.users.byName(saved.user);
       if (!user) continue;
       const env = new Environment(saved.cwd);
       for (const [name, value, exported] of saved.vars) env.set(name, value, { export: exported });
       env.lastStatus = saved.lastStatus;
-      restored.push(this.newSession(user, saved.login, undefined, env));
+      restored.push(this.newSession(machine, user, saved.login, undefined, env));
     }
     if (restored.length === 0) return;
     this.sessions.length = 0;

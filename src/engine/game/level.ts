@@ -1,5 +1,6 @@
 import type { FSDefinition } from '../fs/definition';
-import type { GroupDefinition, UserDefinition } from '../system/host';
+import type { NetworkDefinition, HostNetwork } from '../network/types';
+import type { GroupDefinition, HostDefinition, UserDefinition } from '../system/host';
 import type { SudoRule } from '../system/sudoers';
 
 /** Player-facing text, ready for a Hebrew translation of the side panel later. */
@@ -30,6 +31,12 @@ export interface Level {
   fs: FSDefinition;
   motd?: string;
   homeMode?: string;
+  /** Network interfaces and services of the start host (Phase 2+). */
+  net?: HostNetwork;
+  /** Additional machines on the network (Phase 2+). */
+  hosts?: readonly HostDefinition[];
+  /** Network-wide configuration: DNS, latency (Phase 2+). */
+  network?: NetworkDefinition;
   /** SHA-256 hex digest of the plaintext flag (never the flag itself). */
   flagHash: string;
   hints: readonly Localized[];
