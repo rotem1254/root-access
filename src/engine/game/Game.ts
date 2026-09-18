@@ -203,6 +203,7 @@ export class Game {
               this.onceKeys.add(key);
               return true;
             },
+            locale: this.locale,
           },
         );
       },

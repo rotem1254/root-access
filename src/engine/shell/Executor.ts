@@ -269,6 +269,14 @@ export class Executor {
     if (!resolution.ok) {
       write(fds.err, `${resolution.message}\n`);
       this.flush(opened, fs, fds.err);
+      // Report the attempt too, so level hooks can coach on a typo or unknown command.
+      this.host.commandFinished({
+        name,
+        args: argv.slice(1),
+        exitCode: resolution.status,
+        user: session.user.name,
+        cwd: session.env.cwd,
+      });
       return resolution.status;
     }
 

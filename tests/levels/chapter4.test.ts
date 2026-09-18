@@ -63,7 +63,7 @@ describe('Chapter 4 & 5 catalog', () => {
       '14-injection',
       '15-the-last-door',
     ]);
-    expect(LEVELS).toHaveLength(15);
+    expect(LEVELS).toHaveLength(16);
     expect(LEVELS.some(isStub)).toBe(false);
     expect(playable('15-the-last-door').chapter).toBe(5);
     for (const id of [

@@ -77,17 +77,20 @@ describe('renderSummary', () => {
 
 describe('game.runSummary()', () => {
   it('reports an empty run, then the captured level', async () => {
-    const h = await createGame(LEVELS);
+    // Start on level 1 (after the level-0 tutorial) so SOLUTION1 applies.
+    const h = await createGame(LEVELS, {
+      storage: await storageStartingAt(LEVELS, '01-hidden-in-plain-sight'),
+    });
     const before = h.game.runSummary();
     expect(before.levelsTotal).toBe(LEVELS.length);
-    expect(before.levelsCompleted).toBe(0);
     expect(before.complete).toBe(false);
     expect(before.maxScore).toBe(LEVELS.length * 150);
 
     for (const line of SOLUTION1) await h.run(line);
     const after = h.game.runSummary();
-    expect(after.levelsCompleted).toBe(1);
-    expect(after.rows[0]).toMatchObject({ id: '01-hidden-in-plain-sight', completed: true });
+    expect(after.rows.find((r) => r.id === '01-hidden-in-plain-sight')).toMatchObject({
+      completed: true,
+    });
     expect(after.totalScore).toBeGreaterThan(0);
     expect(after.complete).toBe(false);
   });

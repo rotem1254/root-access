@@ -1,0 +1,13 @@
+Well done — you read a file with `cat`.
+
+That is the whole trick behind everything in this game: look around, read what
+is there, and act on it. You just did all three.
+
+Here is your very first flag. A "flag" is a secret string in the form FLAG{...}
+that proves you completed a task. Copy the whole thing:
+
+    FLAG{h3ll0_t3rm1n4l}
+
+Now submit it. Type this and press Enter:
+
+    submit FLAG{h3ll0_t3rm1n4l}

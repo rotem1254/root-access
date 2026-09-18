@@ -1,4 +1,5 @@
 import { type Level, type LevelCatalog, type Localized } from '../engine/game/level';
+import { level00 } from './level00';
 import { level01 } from './level01';
 import { level02 } from './level02';
 import { level03 } from './level03';
@@ -38,6 +39,7 @@ function withHebrew(level: Level): Level {
 
 /** The ordered catalog the game plays through. Add a new level by importing it here. */
 export const LEVELS: LevelCatalog = [
+  level00,
   level01,
   level02,
   level03,

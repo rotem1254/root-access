@@ -76,6 +76,8 @@ export interface LevelHookAPI {
   echo(text: string): void;
   /** Marks a one-shot flag so a trigger fires once; returns true the first time. */
   once(key: string): boolean;
+  /** The player's UI language, so a guided tutorial can speak it. */
+  locale: 'en' | 'he';
 }
 
 /** The ordered catalog the game plays through. */

@@ -225,6 +225,8 @@ describe('Shell: running commands', () => {
     await h.run('emit a status=3; nosuch');
     expect(seen).toEqual([
       { name: 'emit', args: ['a', 'status=3'], exitCode: 3, user: 'guest', cwd: '/home/guest' },
+      // A not-found command is reported too, so level hooks can coach on typos.
+      { name: 'nosuch', args: [], exitCode: 127, user: 'guest', cwd: '/home/guest' },
     ]);
   });
 });
