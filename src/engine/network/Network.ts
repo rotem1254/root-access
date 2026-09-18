@@ -55,9 +55,14 @@ export class Network {
       ...net.interfaces.map((iface) => ({ ...iface, netmask: iface.netmask ?? DEFAULT_NETMASK })),
     ];
     this.hosts.push({ machine, net, interfaces });
-    for (const iface of net.interfaces) {
-      this.dns.set(machine.hostname.toLowerCase(), iface.ip);
-      this.dns.set(`${machine.hostname.toLowerCase()}.novacorp.internal`, iface.ip);
+    // A hostname resolves to its primary (first) interface, like a single DNS A record.
+    const primary = net.interfaces[0];
+    if (primary) {
+      const name = machine.hostname.toLowerCase();
+      if (!this.dns.has(name)) this.dns.set(name, primary.ip);
+      if (!this.dns.has(`${name}.novacorp.internal`)) {
+        this.dns.set(`${name}.novacorp.internal`, primary.ip);
+      }
     }
   }
 

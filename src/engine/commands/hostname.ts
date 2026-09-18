@@ -26,8 +26,9 @@ export const hostname = defineCommand({
         { long: 'long', key: 'fqdn' },
         { short: 'd', long: 'domain' },
         { short: 'i', long: 'ip-address' },
+        { short: 'I', long: 'all-ip-addresses' },
       ],
-      { unsupported: ['I', 'all-ip-addresses', 'a', 'alias', 'F', 'file'] },
+      { unsupported: ['a', 'alias', 'F', 'file'] },
     );
     if (!outcome.ok) {
       ctx.stderr(outcome.message);
@@ -44,9 +45,15 @@ export const hostname = defineCommand({
     }
     const name = ctx.machine.hostname;
     const dot = name.indexOf('.');
-    if (options.has('short')) ctx.stdout(`${dot < 0 ? name : name.slice(0, dot)}\n`);
+    const externalIps = ctx.network
+      .interfacesOf(ctx.machine)
+      .filter((iface) => iface.name !== 'lo')
+      .map((iface) => iface.ip);
+    if (options.has('all-ip-addresses'))
+      ctx.stdout(`${externalIps.join(' ')}${externalIps.length ? ' ' : ''}\n`);
+    else if (options.has('short')) ctx.stdout(`${dot < 0 ? name : name.slice(0, dot)}\n`);
     else if (options.has('domain')) ctx.stdout(`${dot < 0 ? '' : name.slice(dot + 1)}\n`);
-    else if (options.has('ip-address')) ctx.stdout('127.0.1.1 \n');
+    else if (options.has('ip-address')) ctx.stdout(`${externalIps[0] ?? '127.0.1.1'} \n`);
     else ctx.stdout(`${name}\n`);
     return 0;
   },
