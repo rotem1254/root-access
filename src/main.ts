@@ -4,8 +4,6 @@ import './styles/tokens.css';
 import './styles/layout.css';
 import { createCommandRegistry } from './engine/commands';
 import { Game } from './engine/game';
-import type { GameEvent } from './engine/game/events';
-import { CAPTURE_BANNER } from './content/banners';
 import { LEVELS } from './levels';
 import { runBootSequence } from './ui/BootSequence';
 import { el, isTouchDevice, on } from './ui/dom';
@@ -88,13 +86,6 @@ async function main(): Promise<void> {
   // Repaint the panel roughly once a second so the timer ticks.
   panels.render();
   window.setInterval(() => panels.render(), 1000);
-
-  // Flag-capture celebration in the terminal.
-  game.subscribe((event: GameEvent) => {
-    if (event.type === 'flag-captured') {
-      terminal.writeText(`\n\x1b[1;32m${CAPTURE_BANNER}\x1b[0m`);
-    }
-  });
 
   // Pause the play timer while the tab is hidden.
   document.addEventListener('visibilitychange', () => {

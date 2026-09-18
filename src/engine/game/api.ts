@@ -57,6 +57,31 @@ export interface LevelSummary {
 
 export type StartLevelResult = 'ok' | 'locked' | 'unknown' | 'coming-soon';
 
+/** One row of the end-of-run scoring screen. */
+export interface RunRow {
+  id: string;
+  number: number;
+  chapter: number;
+  title: string;
+  completed: boolean;
+  hintsUsed: number;
+  elapsedMs: number;
+  score: number;
+}
+
+/** The whole run, for the scoring screen shown once every level is captured. */
+export interface RunSummary {
+  rows: readonly RunRow[];
+  levelsCompleted: number;
+  levelsTotal: number;
+  totalScore: number;
+  maxScore: number;
+  totalHints: number;
+  totalMs: number;
+  /** True when every playable level has been captured. */
+  complete: boolean;
+}
+
 export interface GameAPI {
   mission(): MissionInfo | null;
   submitFlag(candidate: string): Promise<SubmitResult>;
@@ -68,6 +93,8 @@ export interface GameAPI {
   levels(): readonly LevelSummary[];
   /** Switches level after the current command line finishes. */
   startLevel(idOrNumber: string): StartLevelResult;
+  /** The end-of-run scoring screen data. */
+  runSummary(): RunSummary;
 }
 
 /** A game with no level loaded. */
@@ -80,4 +107,14 @@ export const NULL_GAME: GameAPI = {
   resetLevel: () => undefined,
   levels: () => [],
   startLevel: () => 'unknown',
+  runSummary: () => ({
+    rows: [],
+    levelsCompleted: 0,
+    levelsTotal: 0,
+    totalScore: 0,
+    maxScore: 0,
+    totalHints: 0,
+    totalMs: 0,
+    complete: false,
+  }),
 };
