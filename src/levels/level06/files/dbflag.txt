@@ -1,0 +1,12 @@
+corp-db01:/opt/export/README
+=============================
+
+This directory holds the quarterly customer exports. Access is restricted to
+the dbadmin account and audited monthly.
+
+Export signing key (do not copy off this host):
+
+    FLAG{p1v0t_thr0ugh_th3_jump}
+
+If you are reading this from anywhere other than the server segment, the
+segmentation has failed and you should raise an incident.

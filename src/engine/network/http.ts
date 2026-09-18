@@ -1,6 +1,12 @@
 import { base64Decode } from '../util/base64';
 import { utf8Encode } from '../util/bytes';
-import type { HttpSite } from './types';
+import { isSealed, unseal } from '../util/seal';
+import type { HttpRoute, HttpSite } from './types';
+
+/** A route body may be sealed so a flag in a page never appears as plaintext in the bundle. */
+function bodyOf(route: HttpRoute): string {
+  return isSealed(route.body) ? unseal(route.body) : route.body;
+}
 
 export interface HttpRequest {
   method: string;
@@ -73,6 +79,7 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
   }
   const status = route.status ?? 200;
   const headers: Record<string, string> = { ...baseHeaders(), ...route.headers };
-  headers['Content-Length'] = String(utf8Encode(route.body).length);
-  return { status, statusText: statusText(status), headers, body: route.body };
+  const body = bodyOf(route);
+  headers['Content-Length'] = String(utf8Encode(body).length);
+  return { status, statusText: statusText(status), headers, body };
 }

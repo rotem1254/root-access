@@ -1,0 +1,15 @@
+corp-jump01 — NetOps crib sheet
+===============================
+
+This box has a leg in both networks:
+  eth0  10.10.0.5   office LAN
+  eth1  10.10.9.5   server segment
+
+That is the whole point of a jump host: the office LAN cannot route to
+10.10.9.0/24, so everything to the database side has to come through here.
+
+Server-segment hosts:
+  10.10.9.20  corp-db01    exports + customer database
+
+Shared dbadmin password for corp-db01 (rotate after the audit, we keep
+forgetting): Qu4rterlyExp0rt!

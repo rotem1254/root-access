@@ -1,5 +1,7 @@
 /** A simulated network: hosts with interfaces, listening services and reachability. */
 
+import type { Sealed } from '../util/seal';
+
 export interface NetworkInterface {
   /** e.g. "eth0", "eth1". A loopback "lo" is added automatically. */
   name: string;
@@ -13,8 +15,8 @@ export interface NetworkInterface {
 export interface HttpRoute {
   status?: number;
   headers?: Readonly<Record<string, string>>;
-  /** Body as text; sealed content is decoded by the level loader before it gets here. */
-  body: string;
+  /** Body as text, or sealed content (so a flag in a page stays out of the bundle). */
+  body: string | Sealed;
   /** Basic-auth realm: if set, requests without the right credentials get 401. */
   auth?: { realm: string; user: string; password: string };
 }
