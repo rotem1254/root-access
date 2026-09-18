@@ -1,0 +1,13 @@
+mreyes — personal notes
+=======================
+
+Reminder: stop reusing this password. It is on the service account, the build
+panel and this login. If one of them leaks, all of them are gone.
+
+(Security nagged me about this twice. I will rotate it after the quarter.)
+
+Incident reference for the export I was asked to run:
+
+    FLAG{w0rdl1st_w1ns_ag41n}
+
+The request came by chat, not by ticket. That should have been the first clue.
