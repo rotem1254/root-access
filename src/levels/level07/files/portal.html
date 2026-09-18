@@ -1,0 +1,7 @@
+NovaCorp Export Portal — /admin =============================== Authenticated as: svc-export
+Scheduled exports ----------------- customer-sync nightly 02:50 -> s3://novacorp-staging/customers/
+adhoc-export-qtr manual -> s3://novacorp-staging/adhoc/ retention-purge DISABLED since 2025-11-02
+The retention purge has been disabled for four months. That is why the leaked records still
+contained customers who asked to be forgotten. Portal master token: FLAG{cl34rt3xt_c0nf3ss10ns}
+SECURITY NOTE: this portal still speaks plain HTTP. Every login is sent in clear text over the wire.
+Migrate to TLS before the next audit.

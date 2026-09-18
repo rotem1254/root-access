@@ -291,14 +291,12 @@ describe('whoami, id and hostname', () => {
     expect((await h.run('hostname -s')).stdout).toBe('corp-web01\n');
     expect((await h.run('hostname -f')).stdout).toBe('corp-web01\n');
     expect((await h.run('hostname -d')).stdout).toBe('\n');
-    expect((await h.run('hostname -i')).stdout).toBe('127.0.1.1 \n');
+    expect((await h.run('hostname -i')).stdout).toBe('10.0.2.15 \n');
     expect(await h.run('hostname evil')).toMatchObject({
       stderr: 'hostname: you must be root to change the host name\n',
       status: 1,
     });
-    expect((await h.run('hostname -I')).stderr).toContain(
-      "option '-I' is not supported in this simulation",
-    );
+    expect((await h.run('hostname -I')).stdout).toBe('10.0.2.15 \n');
   });
 
   it('splits dotted host names', async () => {

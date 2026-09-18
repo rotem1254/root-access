@@ -6,7 +6,7 @@ import { S_ISUID } from '../fs/mode';
 import type { Credentials } from '../fs/permissions';
 import type { Stat } from '../fs/types';
 import type { GameAPI } from '../game/api';
-import type { Machine } from '../system/Machine';
+import type { Network } from '../network/Network';
 import { type ByteString, utf8Encode } from '../util/bytes';
 import type { CommandList, Pipeline, SimpleCommand, Word } from './ast';
 import { expandAssignment, type ExpansionContext, expandWords } from './expand';
@@ -42,7 +42,7 @@ export interface ExecutedCommand {
 
 /** What the executor needs from the interactive shell around it. */
 export interface ExecutionHost {
-  readonly machine: Machine;
+  readonly network: Network;
   readonly registry: CommandRegistry;
   readonly game: GameAPI;
   readonly interrupted: boolean;
@@ -117,7 +117,7 @@ export class Executor {
   }
 
   expansionContext(session: Session): ExpansionContext {
-    const { machine } = this.host;
+    const machine = session.machine;
     const env = session.env;
     const fs = this.fileSystem(session, machine.users.credentials(session.user));
     return {
@@ -168,7 +168,7 @@ export class Executor {
 
   private fileSystem(session: Session, credentials: Credentials): FileSystem {
     return createFileSystemView(
-      this.host.machine.fs,
+      session.machine.fs,
       () => credentials,
       () => session.env.cwd,
     );
@@ -239,7 +239,7 @@ export class Executor {
     io: ExecIO,
     resolvedPath?: string,
   ): Promise<number> {
-    const { machine } = this.host;
+    const machine = session.machine;
     const expansion = this.expansionContext(session);
     const argv = this.expandArguments(command, expansion);
     const baseCredentials = machine.users.credentials(session.user);
@@ -299,6 +299,7 @@ export class Executor {
       user: session.user,
       credentials,
       machine,
+      network: this.host.network,
       tty: this.tty(out),
       shell: this.host.api(session),
       game: this.host.game,

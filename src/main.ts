@@ -71,7 +71,8 @@ async function main(): Promise<void> {
     },
   });
 
-  terminal = new Terminal(game.shell);
+  // Each level gets a fresh Shell, so the terminal resolves the current one on every use.
+  terminal = new Terminal(() => game.shell);
   terminal.mount(terminalHost);
 
   const term = terminal;
@@ -104,6 +105,12 @@ async function main(): Promise<void> {
   // The shell drives the prompt; forward its input-request changes to the terminal.
   game.subscribe((event) => {
     if (event.type === 'prompt-changed') terminal.onInputRequest(game.shell.inputRequest);
+    if (event.type === 'level-started') {
+      // A new level means a new Shell on a new machine: announce it and draw its prompt.
+      terminal.writeText('\n');
+      terminal.motd();
+      terminal.onInputRequest(game.shell.inputRequest);
+    }
   });
 
   await runBootSequence(terminal, { full: !game.bootSeen });

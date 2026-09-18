@@ -5,9 +5,10 @@ and solves real challenges — Linux, permissions, log analysis, cryptography, n
 flags and progress through a story. It is built for pre-military cyber cadets (~17–19): every puzzle
 teaches a genuine, transferable skill that works the same way on a real Linux system.
 
-**Phase 1 (this build)** delivers the engine, a faithful bash-like shell with ~40 commands, the level
-and scoring system, save/load, the terminal UI, and Chapter 1 — "Initial Access" (three playable
-levels). Chapters 2 and 3 appear as _coming soon_ stubs.
+**This build** delivers the engine, a faithful bash-like shell with ~53 commands, the level and
+scoring system, save/load, the terminal UI, and two playable chapters: Chapter 1 "Initial Access"
+(three levels) and Chapter 2 "Lateral Movement" (four levels, on a simulated network with ssh
+pivoting). Chapter 3 appears as _coming soon_ stubs.
 
 ## Running it
 
@@ -55,10 +56,11 @@ src/
     fs/              VirtualFS, POSIX paths, Linux permissions, node types, serialization
     system/          user/group database, sudoers, the Ubuntu-like base machine image
     shell/           lexer, parser, expansion, glob, executor, interactive Shell, completion
+    network/         hosts with IPs, DNS, per-interface reachability, services, HTTP, pcap
     commands/        one file per command, a shared Command interface, GNU-style option parsing
       game/          mission, hint, submit, status, reset, levels
     game/            Game orchestrator, level model, scoring, flags, storage, events
-  levels/            Chapter 1 levels (self-contained data) + coming-soon stubs
+  levels/            Chapter 1 and 2 levels (self-contained data) + coming-soon stubs
   ui/                xterm Terminal, LineEditor, keymap, Panels/HUD, boot sequence, touch keys
   content/           strings.ts (UI chrome, i18n-ready) and ASCII banners
   styles/            design tokens and layout
@@ -85,6 +87,9 @@ Programs: `ls`, `cat`, `file`, `strings`, `grep`, `head`, `tail`, `wc`, `sort`, 
 `base64`, `find`, `su`, `sudo`, `env`, `whoami`, `id`, `hostname`, `man`, `mkdir`, `touch`, `rm`, `cp`,
 `mv`, `chmod`.
 
+Networking: `ip` (`a`/`route`), `ifconfig`, `ping`, `nmap` (`-p`, `-sV`, `-F`, CIDR sweeps),
+`netstat`, `ss`, `ssh`, `nc`, `curl`, `wget`, `dig`, `nslookup`, `tcpdump -r`.
+
 Game commands: `mission`, `hint`, `submit`, `status`, `reset`, `levels`.
 
 Every command supports `--help` and has a `man` page. The shell supports pipes (`|`), redirects
@@ -108,10 +113,38 @@ Levels are pure data — adding one never touches engine code.
 5. Register the level in `src/levels/index.ts`.
 6. Add it to the solvability/anti-shortcut tests in `tests/levels/`, then run `npm run check`.
 
+### Networked levels
+
+A level becomes a network level by adding `net` (the start host's interfaces and listening services)
+and `hosts` (the other machines). Reachability is per interface: two hosts can talk only when they
+have interfaces on the same subnet, so a dual-homed host is what makes `ssh` pivoting necessary.
+
+```ts
+net: { interfaces: [{ name: 'eth0', ip: '10.10.0.9' }], gateway: '10.10.0.1' },
+hosts: [
+  {
+    hostname: 'corp-intra',
+    net: {
+      interfaces: [{ name: 'eth0', ip: '10.10.0.30' }],
+      ports: [
+        { port: 22, product: 'OpenSSH', version: '8.9p1' },
+        { port: 80, http: { routes: { '/': { body: sealedPage } } } },
+      ],
+    },
+  },
+],
+```
+
+An HTTP route `body` may be a sealed import, so a flag on a page never reaches the bundle as
+plaintext. For a packet capture, build one with `encodePcap(summary)` and store it as a file's
+`bytes`: `file` recognises it as a pcap and `tcpdump -r` renders it.
+
 ## Story
 
 You are a junior security analyst hired to investigate NovaCorp, a company suspected of leaking
 customer data. Chapter 1 takes you from a hidden note on an old workstation, through a break-in
 buried in a server's logs, to a locked account whose password was left in a world-readable backup.
-All hosts, addresses and domains are reserved for documentation (RFC 5737 / RFC 1918, `.example`,
-`.internal`) — nothing here points at a real system.
+Chapter 2 moves onto the network: you map the office LAN, find a service parked on an odd port,
+pivot through a jump host into a segmented server network, and finally pull a cleartext credential
+out of a packet capture. All hosts, addresses and domains are reserved for documentation
+(RFC 5737 / RFC 1918, `.example`, `.internal`) — nothing here points at a real system.

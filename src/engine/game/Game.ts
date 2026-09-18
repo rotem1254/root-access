@@ -1,7 +1,8 @@
 import type { CommandRegistry } from '../commands/types';
 import { deserializeRoot, serializeNode } from '../fs/serialize';
 import { Shell, type ShellHooks } from '../shell/Shell';
-import { buildMachine, type Machine } from '../system/Machine';
+import { buildNetwork, type Machine } from '../system/Machine';
+import type { Network } from '../network/Network';
 import type { HostDefinition } from '../system/host';
 import type { Clock } from '../util/clock';
 import { ManualClock } from '../util/clock';
@@ -59,6 +60,7 @@ export class Game {
   private save: SaveData;
   private shellInstance!: Shell;
   private machineInstance!: Machine;
+  private networkInstance!: Network;
   private currentLevel!: Level;
   private revealed: string[] = [];
   private wrongThisLevel = 0;
@@ -100,6 +102,10 @@ export class Game {
 
   get machine(): Machine {
     return this.machineInstance;
+  }
+
+  get network(): Network {
+    return this.networkInstance;
   }
 
   get level(): Level {
@@ -167,7 +173,12 @@ export class Game {
 
   private contentHash(level: Level): string {
     return sha256Hex(
-      JSON.stringify({ fs: level.fs, flag: level.flagHash, users: level.users ?? [] }),
+      JSON.stringify({
+        fs: level.fs,
+        flag: level.flagHash,
+        users: level.users ?? [],
+        hosts: (level.hosts ?? []).map((host) => host.hostname),
+      }),
     );
   }
 
@@ -220,12 +231,17 @@ export class Game {
       fs: level.fs,
       ...(level.motd ? { motd: level.motd } : {}),
       ...(level.homeMode ? { homeMode: level.homeMode } : {}),
+      ...(level.net ? { net: level.net } : {}),
     };
-    this.machineInstance = buildMachine(host, {
+    this.networkInstance = buildNetwork([host, ...(level.hosts ?? [])], {
       clock,
       time: STORY_EPOCH,
       binaries: this.registry.binaries(),
+      ...(level.network ? { network: level.network } : {}),
     });
+    const startMachine = this.networkInstance.machineByHostname(level.startHost);
+    if (!startMachine) throw new Error(`level ${id} has no start host ${level.startHost}`);
+    this.machineInstance = startMachine;
 
     const restore =
       session?.levelId === id && session.contentHash === this.contentHash(level) ? session : null;
@@ -239,7 +255,8 @@ export class Game {
     }
 
     this.shellInstance = new Shell({
-      machine: this.machineInstance,
+      network: this.networkInstance,
+      host: level.startHost,
       registry: this.registry,
       game: this.api,
       user: level.startUser,

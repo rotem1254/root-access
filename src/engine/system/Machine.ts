@@ -1,6 +1,8 @@
 import { baseSystemDefinition, type BinarySpec, DEFAULT_MOTD } from '../fs/baseSystem';
 import { applyFsDefinition } from '../fs/definition';
 import { VirtualFS } from '../fs/VirtualFS';
+import { Network } from '../network/Network';
+import type { HostNetwork, NetworkDefinition } from '../network/types';
 import type { Clock } from '../util/clock';
 import type { HostDefinition } from './host';
 import { BASE_SUDO_RULES, type SudoRule } from './sudoers';
@@ -79,4 +81,26 @@ export function buildMachine(host: HostDefinition, options: BuildMachineOptions)
   applyFsDefinition(fs.root, base, users, options.time);
   applyFsDefinition(fs.root, host.fs ?? {}, users, options.time);
   return new Machine(host.hostname, fs, users, sudoers);
+}
+
+/** A host's network metadata, defaulting to a single eth0 when the level does not specify one. */
+function hostNetwork(host: HostDefinition, fallbackIp: string): HostNetwork {
+  return host.net ?? { interfaces: [{ name: 'eth0', ip: fallbackIp }] };
+}
+
+/**
+ * Builds a Network from the primary host and any additional hosts. Hosts without explicit network
+ * metadata get a default eth0 (10.0.2.15, 10.0.2.16, …), so single-machine levels still show a
+ * believable `ip a`.
+ */
+export function buildNetwork(
+  hosts: readonly HostDefinition[],
+  options: BuildMachineOptions & { network?: NetworkDefinition },
+): Network {
+  const network = new Network(options.network ?? {});
+  hosts.forEach((host, index) => {
+    const machine = buildMachine(host, options);
+    network.add(machine, hostNetwork(host, `10.0.2.${15 + index}`));
+  });
+  return network;
 }

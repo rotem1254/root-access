@@ -44,9 +44,9 @@ async function gotoLevel(h: GameHarness, id: string): Promise<void> {
 }
 
 describe('Chapter 1 catalog', () => {
-  it('has three playable levels then coming-soon stubs, all consistent', () => {
+  it('has three playable Chapter 1 levels, and every playable level is consistent', () => {
     const playable = LEVELS.filter((entry): entry is Level => !isStub(entry));
-    expect(playable.map((level) => level.id)).toEqual([
+    expect(playable.filter((level) => level.chapter === 1).map((level) => level.id)).toEqual([
       '01-hidden-in-plain-sight',
       '02-needle-in-the-logs',
       '03-permission-denied',
@@ -57,7 +57,8 @@ describe('Chapter 1 catalog', () => {
       expect(level.skills.length).toBeGreaterThan(0);
       expect(level.flagHash).toMatch(/^[0-9a-f]{64}$/);
     }
-    expect(LEVELS.filter(isStub).length).toBe(8);
+    // Playable levels come first; only later chapters are still stubs.
+    expect(LEVELS.filter(isStub).every((stub) => stub.chapter >= 3)).toBe(true);
     // Level ids are unique.
     expect(new Set(LEVELS.map((l) => l.id)).size).toBe(LEVELS.length);
   });

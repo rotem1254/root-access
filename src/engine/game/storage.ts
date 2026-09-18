@@ -18,6 +18,7 @@ export interface SessionSnapshot {
   contentHash: string;
   fs: SerializedNode;
   shells: {
+    host: string;
     user: string;
     login: boolean;
     cwd: string;

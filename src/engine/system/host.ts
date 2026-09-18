@@ -1,4 +1,5 @@
 import type { FSDefinition } from '../fs/definition';
+import type { HostNetwork } from '../network/types';
 import type { SudoRule } from './sudoers';
 
 export interface UserDefinition {
@@ -36,4 +37,6 @@ export interface HostDefinition {
   motd?: string;
   /** Mode for generated home directories. Ubuntu's default is `"0750"`. */
   homeMode?: string;
+  /** Network interfaces and listening services. Defaults to a single eth0 when omitted. */
+  net?: HostNetwork;
 }

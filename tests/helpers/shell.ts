@@ -1,9 +1,10 @@
 import type { Command } from '../../src/engine/commands/types';
 import { CommandRegistry } from '../../src/engine/commands/types';
 import { type GameAPI, NULL_GAME } from '../../src/engine/game/api';
+import type { Network } from '../../src/engine/network/Network';
 import { Shell, type ShellHooks } from '../../src/engine/shell/Shell';
 import type { HostDefinition } from '../../src/engine/system/host';
-import { buildMachine, type Machine } from '../../src/engine/system/Machine';
+import { buildNetwork, type Machine } from '../../src/engine/system/Machine';
 import { utf8Decode } from '../../src/engine/util/bytes';
 import { ManualClock } from '../../src/engine/util/clock';
 
@@ -29,6 +30,7 @@ export interface RunResult {
 export interface Harness {
   shell: Shell;
   machine: Machine;
+  network: Network;
   clock: ManualClock;
   /** Submits a line and returns what it printed and `$?` of the session that ran it. */
   run(line: string): Promise<RunResult>;
@@ -39,6 +41,8 @@ export interface Harness {
 export interface HarnessOptions {
   commands?: readonly Command[];
   host?: HostDefinition;
+  /** Additional machines on the network. */
+  hosts?: readonly HostDefinition[];
   user?: string;
   cwd?: string;
   game?: GameAPI;
@@ -49,15 +53,19 @@ export interface HarnessOptions {
 export function createHarness(options: HarnessOptions = {}): Harness {
   const registry = new CommandRegistry().register(...(options.commands ?? []));
   const clock = new ManualClock(STORY_TIME);
-  const machine = buildMachine(options.host ?? DEFAULT_HOST, {
+  const primary = options.host ?? DEFAULT_HOST;
+  const network = buildNetwork([primary, ...(options.hosts ?? [])], {
     clock,
     time: STORY_TIME,
     binaries: registry.binaries(),
   });
+  const machine = network.machineByHostname(primary.hostname);
+  if (!machine) throw new Error('harness: no primary machine');
   let stdout = '';
   let stderr = '';
   const shell = new Shell({
-    machine,
+    network,
+    host: primary.hostname,
     registry,
     game: options.game ?? NULL_GAME,
     user: options.user ?? 'guest',
@@ -82,6 +90,7 @@ export function createHarness(options: HarnessOptions = {}): Harness {
   return {
     shell,
     machine,
+    network,
     clock,
     take,
     run: async (line) => {

@@ -4,6 +4,7 @@ import type { Credentials } from '../fs/permissions';
 import type { GameAPI } from '../game/api';
 import type { Environment } from '../shell/Environment';
 import type { Machine } from '../system/Machine';
+import type { Network } from '../network/Network';
 import type { UserRecord } from '../system/UserDB';
 import type { ByteString } from '../util/bytes';
 
@@ -78,6 +79,8 @@ export interface ShellAPI {
   readonly isLoginShell: boolean;
   /** Starts a new shell as `user` (su). It takes over from the next command line. */
   pushSession(user: UserRecord, options: { login: boolean }): void;
+  /** Starts a login shell as `user` on another machine (ssh). Takes over from the next line. */
+  sshTo(machine: Machine, user: UserRecord): void;
   /** Leaves the current shell. */
   exit(status: number): void;
   /** The environment a login shell for `user` starts with. */
@@ -113,7 +116,10 @@ export interface CommandContext {
   user: UserRecord;
   /** Effective credentials: root while a setuid-root binary runs. */
   credentials: Credentials;
+  /** The machine this shell session is running on (changes after ssh). */
   machine: Machine;
+  /** The simulated network, for recon and connectivity commands. */
+  network: Network;
   tty: TTY;
   shell: ShellAPI;
   game: GameAPI;
