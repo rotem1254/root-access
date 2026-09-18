@@ -11,12 +11,35 @@ export interface NetworkInterface {
   mac?: string;
 }
 
+/** What a handler sees: the request, already split into path, query, headers and body. */
+export interface HttpRequestInfo {
+  method: string;
+  /** Path without the query string. */
+  path: string;
+  query: Readonly<Record<string, string>>;
+  headers: Readonly<Record<string, string>>;
+  /** Request body (what `curl -d` sent), empty for a GET. */
+  body: string;
+}
+
+/** What a handler returns. */
+export interface HttpRouteResult {
+  status?: number;
+  headers?: Readonly<Record<string, string>>;
+  body: string | Sealed;
+}
+
+/** A route that computes its answer, so a level can serve a search page or a record lookup. */
+export type HttpHandler = (request: HttpRequestInfo) => HttpRouteResult;
+
 /** A tiny simulated HTTP site served on an http/https port. */
 export interface HttpRoute {
   status?: number;
   headers?: Readonly<Record<string, string>>;
   /** Body as text, or sealed content (so a flag in a page stays out of the bundle). */
-  body: string | Sealed;
+  body?: string | Sealed;
+  /** Computes the response instead of serving a fixed body. */
+  handler?: HttpHandler;
   /** Basic-auth realm: if set, requests without the right credentials get 401. */
   auth?: { realm: string; user: string; password: string };
 }

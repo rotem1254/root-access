@@ -1,0 +1,13 @@
+NovaCorp — /internal/backup/ (not for public consumption)
+=========================================================
+
+This directory is excluded in robots.txt, which we apparently believed was a
+security control. It is not. robots.txt is a request to well-behaved crawlers,
+and it is a public file that lists every path you did not want found.
+
+Staging credentials snapshot — rotate after migration:
+
+    portal_admin / Migrat3-Me-Pls
+    audit_token=FLAG{r0b0ts_txt_1s_n0t_4_l0ck}
+
+TODO(ops): move this off the web root. Filed 2025-09-14. Still open.

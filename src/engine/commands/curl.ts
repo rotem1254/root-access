@@ -27,7 +27,7 @@ export const curl = defineCommand({
   name: 'curl',
   kind: 'binary',
   description: 'transfer a URL',
-  usage: ['[-sIL] [-u user:pass] [-o file] URL'],
+  usage: ['[-sIL] [-X METHOD] [-d DATA] [-H HEADER] [-u user:pass] [-o file] URL'],
   about:
     'Fetch a URL and print the response body. curl is the quickest way to talk to a\nweb service you have found: read a page, inspect the headers, or send simple\nrequests. With no options it prints the body of a GET request.',
   options: [
@@ -37,12 +37,18 @@ export const curl = defineCommand({
     ['-u, --user USER:PASS', 'server user and password for HTTP basic auth'],
     ['-o, --output FILE', 'write the body to FILE instead of stdout'],
     ['-L, --location', 'follow redirects'],
+    ['-X, --request METHOD', 'the request method to use (GET, POST, ...)'],
+    ['-d, --data DATA', 'send DATA as the request body; implies POST'],
+    ['-H, --header LINE', "add a request header, e.g. -H 'X-Role: admin'"],
+    ['-b, --cookie DATA', 'send a cookie header'],
   ],
   details:
-    'The URL is http://host[:port]/path. Point curl at a port you found with nmap:\n  curl http://10.10.9.20:8080/\n  curl -I http://vault/\n  curl -u admin:secret http://vault/admin\nUse curl -v to see the status line and headers, which often reveal the server\nand what it wants.',
+    'The URL is http://host[:port]/path, and it may carry a query string:\n  curl "http://site/search?q=acme"\nQuote the URL when it contains & or ? so the shell does not eat them.\n\nOther common forms:\n  curl -I http://vault/                       headers only\n  curl -u admin:secret http://vault/admin     HTTP basic auth\n  curl -d "user=x&pass=y" http://site/login   send a form (implies POST)\n  curl -H \'X-Role: admin\' http://site/me      add a request header\nUse curl -v to see the status line and headers, which often reveal the server\nand what it wants.',
   examples: [
     ['curl http://10.10.0.5/', 'fetch a web page'],
     ['curl -I http://vault:8080/', 'just the response headers'],
+    ['curl "http://site/item?id=7"', 'pass a query parameter'],
+    ['curl -d "q=acme" http://site/search', 'send a form body'],
   ],
   seeAlso: ['wget(1)', 'nc(1)', 'nmap(1)'],
   run: async (ctx) => {
@@ -57,8 +63,13 @@ export const curl = defineCommand({
         { short: 'o', long: 'output', arg: 'required' },
         { short: 'L', long: 'location' },
         { short: 'A', long: 'user-agent', arg: 'required' },
+        { short: 'X', long: 'request', arg: 'required' },
+        { short: 'd', long: 'data', arg: 'required' },
+        { short: 'H', long: 'header', arg: 'required' },
+        { short: 'b', long: 'cookie', arg: 'required' },
+        { short: 'k', long: 'insecure' },
       ],
-      { unsupported: ['X', 'd', 'data', 'H', 'header', 'k', 'insecure', 'F', 'form'] },
+      { unsupported: ['F', 'form', 'data-binary', 'T', 'upload-file'] },
     );
     if (!outcome.ok) {
       ctx.stderr(outcome.message);
@@ -96,13 +107,30 @@ export const curl = defineCommand({
     };
     const user = o.value('user');
     if (user !== undefined) headers.Authorization = `Basic ${base64Encode(user)}`;
+    const cookie = o.value('cookie');
+    if (cookie !== undefined) headers.Cookie = cookie;
+    // -d implies POST with a form content type, exactly like the real tool.
+    const data = o.value('data');
+    if (data !== undefined) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    const method = o.value('request') ?? (data !== undefined ? 'POST' : 'GET');
+    for (const header of o.values('header')) {
+      const colon = header.indexOf(':');
+      if (colon > 0) headers[header.slice(0, colon).trim()] = header.slice(colon + 1).trim();
+    }
     if (o.has('verbose')) {
       ctx.stderr(
         `*   Trying ${ip}:${url.port}...\n* Connected to ${url.host} (${ip}) port ${url.port}\n`,
       );
-      ctx.stderr(`> GET ${url.path} HTTP/1.1\n> Host: ${url.host}\n> User-Agent: curl/8.5.0\n>\n`);
+      ctx.stderr(
+        `> ${method} ${url.path} HTTP/1.1\n> Host: ${url.host}\n> User-Agent: curl/8.5.0\n>\n`,
+      );
     }
-    const response = serveHttp(service.http, { method: 'HEAD', path: url.path, headers });
+    const response = serveHttp(service.http, {
+      method,
+      path: url.path,
+      headers,
+      ...(data !== undefined ? { body: data } : {}),
+    });
 
     if (o.has('verbose') || o.has('head')) {
       const statusLine = `HTTP/1.1 ${response.status} ${statusText(response.status)}`;

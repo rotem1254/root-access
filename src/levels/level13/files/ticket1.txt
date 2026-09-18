@@ -1,0 +1,12 @@
+Ticket #1  [INTERNAL]
+=====================
+From    : it-security@novacorp.example
+Subject : Break-glass admin credentials
+
+Filed by the security team when the portal launched. Left open ever since.
+
+  portal admin URL : http://helpdesk.novacorp.internal/admin
+  break-glass token: FLAG{1d0r_c0unt_up_t0_r00t}
+
+Reminder: ticket #1 should never have been reachable by customer accounts. The
+ticket viewer only checks that you are logged in, not that the ticket is yours.

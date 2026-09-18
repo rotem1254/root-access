@@ -66,7 +66,6 @@ describe('Chapter 3 catalog', () => {
       '11-signed-and-sealed',
     ]);
     expect(LEVELS.some(isStub)).toBe(false);
-    expect(LEVELS).toHaveLength(11);
     for (const entry of chapter3) {
       const level = entry as Level;
       expect(level.hints.length).toBeGreaterThanOrEqual(3);

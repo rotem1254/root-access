@@ -1,0 +1,20 @@
+================================================================
+  NovaCorp — corp-core — deploy account
+================================================================
+
+You chained the whole thing together to reach this shell:
+
+  · you scanned the host and found the web service         (recon)
+  · you injected the product search to read the vault      (web)
+  · you decrypted the deploy credential with openssl       (crypto)
+  · you used it to ssh in                                  (lateral movement)
+
+That is exactly how real intrusions happen — not one clever exploit, but a
+chain of ordinary weaknesses, each one small on its own.
+
+Final flag — the case is closed:
+
+    FLAG{r00t_4cc3ss_gr4nt3d}
+
+Now go write the report: every link in this chain was preventable.
+— A.
