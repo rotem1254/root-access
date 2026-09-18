@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/check-dist.ts",
+    "build": "vite build && node --experimental-strip-types scripts/check-dist.ts",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.engine.json && tsc -p tsconfig.node.json",
     "lint": "eslint . && prettier --check .",
