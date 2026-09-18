@@ -123,3 +123,19 @@ describe('errors', () => {
     expect(() => runQuery(DB, '')).toThrow(SqlError);
   });
 });
+
+describe('UNION column count', () => {
+  it('refuses arms of different widths, the way MySQL does', () => {
+    const three = "SELECT id, name, email FROM customers WHERE name = ''";
+    expect(() => runQuery(DB, `${three} UNION SELECT id FROM staff -- `)).toThrow(
+      /different number of columns/,
+    );
+    expect(() => runQuery(DB, `${three} UNION SELECT id, username FROM staff -- `)).toThrow(
+      /different number of columns/,
+    );
+    // The right width works, which is how the column count is discovered.
+    expect(
+      runQuery(DB, `${three} UNION SELECT id, username, token FROM staff -- `).rows,
+    ).toHaveLength(2);
+  });
+});

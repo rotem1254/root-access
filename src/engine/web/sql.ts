@@ -348,13 +348,24 @@ export function runQuery(database: SqlDatabase, sql: string): SqlResult {
   const results = selects.map((select) => runSelect(database, select));
   const first = results[0];
   if (!first) throw new SqlError('syntax error');
+  // MySQL refuses a UNION whose arms have different widths — which is exactly how an attacker
+  // works out the column count, one guess at a time.
+  for (const result of results) {
+    if (result.columns.length !== first.columns.length) {
+      throw new SqlError('The used SELECT statements have a different number of columns');
+    }
+  }
   const rows = results.flatMap((result) => result.rows);
   return { columns: first.columns, rows };
 }
 
 /** The message a careless app leaks when it passes the driver error straight through. */
 export function mysqlErrorText(error: SqlError): string {
-  if (error.message.startsWith('Unknown column') || error.message.includes("doesn't exist")) {
+  if (
+    error.message.startsWith('Unknown column') ||
+    error.message.includes("doesn't exist") ||
+    error.message.startsWith('The used SELECT statements')
+  ) {
     return error.message;
   }
   const near = error.near.slice(0, 32);

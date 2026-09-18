@@ -97,7 +97,7 @@ describe('game.runSummary()', () => {
     const out = await h.run('summary');
     expect(out.stdout).toContain('RUN SUMMARY');
     expect(out.stdout).toContain('Hidden in Plain Sight');
-    expect(out.stdout).toContain('Levels captured 0/11');
+    expect(out.stdout).toContain(`Levels captured 0/${LEVELS.length}`);
   });
 
   it('emits run-complete and reports complete once the last level is captured', async () => {
@@ -107,7 +107,7 @@ describe('game.runSummary()', () => {
     expect(h.game.runSummary().complete).toBe(false);
     expect(h.game.runSummary().levelsCompleted).toBe(LEVELS.length - 1);
 
-    const { FLAG } = await import('../../../src/levels/level11/solution');
+    const { FLAG } = await import('../../../src/levels/level15/solution');
     await h.run(`submit ${FLAG}`);
     const summary = h.game.runSummary();
     expect(summary.complete).toBe(true);
