@@ -1,7 +1,16 @@
 /** Tiny DOM helpers so the UI code stays readable without a framework. */
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
-  attrs: Partial<{ class: string; text: string; html: string; title: string; type: string }> = {},
+  attrs: Partial<{
+    class: string;
+    text: string;
+    html: string;
+    title: string;
+    type: string;
+    id: string;
+    /** Arbitrary attributes (role, aria-*, dir, tabindex, …). */
+    attrs: Record<string, string>;
+  }> = {},
   children: (Node | string)[] = [],
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -9,7 +18,10 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   if (attrs.text !== undefined) node.textContent = attrs.text;
   if (attrs.html !== undefined) node.innerHTML = attrs.html;
   if (attrs.title) node.title = attrs.title;
+  if (attrs.id) node.id = attrs.id;
   if (attrs.type && 'type' in node) (node as HTMLInputElement).type = attrs.type;
+  if (attrs.attrs)
+    for (const [key, value] of Object.entries(attrs.attrs)) node.setAttribute(key, value);
   for (const child of children) node.append(child);
   return node;
 }
