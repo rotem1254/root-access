@@ -52,6 +52,12 @@ import { unset } from './unset';
 import { wc } from './wc';
 import { wget } from './wget';
 import { whoami } from './whoami';
+import { gpg } from './gpg';
+import { john } from './john';
+import { openssl } from './openssl';
+import { md5sum, sha1sum, sha256sum, sha512sum } from './sums';
+import { tr } from './tr';
+import { xxd } from './xxd';
 
 /** Every Linux command the simulation provides (game commands are registered by the game). */
 export const LINUX_COMMANDS: readonly Command[] = [
@@ -71,6 +77,7 @@ export const LINUX_COMMANDS: readonly Command[] = [
   falseCommand,
   file,
   find,
+  gpg,
   grep,
   head,
   help,
@@ -79,7 +86,9 @@ export const LINUX_COMMANDS: readonly Command[] = [
   id,
   ifconfig,
   ip,
+  john,
   logout,
+  md5sum,
   mkdir,
   mv,
   netstat,
@@ -88,10 +97,14 @@ export const LINUX_COMMANDS: readonly Command[] = [
   nslookup,
   ls,
   man,
+  openssl,
   ping,
   printf,
   pwd,
   rm,
+  sha1sum,
+  sha256sum,
+  sha512sum,
   sort,
   ss,
   ssh,
@@ -100,12 +113,14 @@ export const LINUX_COMMANDS: readonly Command[] = [
   sudo,
   tail,
   tcpdump,
+  tr,
   touch,
   trueCommand,
   uniq,
   unset,
   wc,
   wget,
+  xxd,
   whoami,
 ];
 

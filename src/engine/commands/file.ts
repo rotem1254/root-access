@@ -95,6 +95,9 @@ function textDescription(data: ByteString): Magic | null {
   if (data.startsWith('-----BEGIN PGP MESSAGE-----')) {
     return { description: 'PGP message', mime: 'text/plain; charset=us-ascii' };
   }
+  if (data.startsWith('-----BEGIN PGP PRIVATE KEY BLOCK-----')) {
+    return { description: 'PGP private key block', mime: 'text/plain; charset=us-ascii' };
+  }
   if (/^ssh-(rsa|ed25519) AAAA/.test(data)) {
     const type = data.startsWith('ssh-rsa') ? 'RSA' : 'ED25519';
     return { description: `OpenSSH ${type} public key`, mime: 'text/plain; charset=us-ascii' };
@@ -103,6 +106,13 @@ function textDescription(data: ByteString): Magic | null {
 }
 
 function binaryDescription(data: ByteString, stat: Stat, name: string): Magic | null {
+  // `openssl enc` containers start with the literal magic "Salted__" then an 8-byte salt.
+  if (data.startsWith('Salted__')) {
+    return {
+      description: "openssl enc'd data with salted password",
+      mime: 'application/octet-stream; charset=binary',
+    };
+  }
   if (data.startsWith('\x7fELF')) {
     const bits = data.charCodeAt(4) === 2 ? '64-bit' : '32-bit';
     const endian = data.charCodeAt(5) === 2 ? 'MSB' : 'LSB';
