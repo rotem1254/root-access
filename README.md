@@ -5,10 +5,11 @@ and solves real challenges — Linux, permissions, log analysis, cryptography, n
 flags and progress through a story. It is built for pre-military cyber cadets (~17–19): every puzzle
 teaches a genuine, transferable skill that works the same way on a real Linux system.
 
-**This build** delivers the engine, a faithful bash-like shell with ~53 commands, the level and
-scoring system, save/load, the terminal UI, and two playable chapters: Chapter 1 "Initial Access"
-(three levels) and Chapter 2 "Lateral Movement" (four levels, on a simulated network with ssh
-pivoting). Chapter 3 appears as _coming soon_ stubs.
+**This build** delivers the engine, a faithful bash-like shell with ~62 commands, the level and
+scoring system, save/load, the terminal UI, an end-of-run scoring screen, and all three chapters:
+"Initial Access" (3 levels), "Lateral Movement" (4 levels, on a simulated network with ssh
+pivoting) and "Breaking the Cipher" (4 levels of hashing, cracking and encryption) — 11 playable
+levels in total.
 
 ## Running it
 
@@ -37,7 +38,8 @@ Type Linux commands at the prompt, just like a real terminal. Useful game comman
 - `mission` — show the current objective (`mission -b` for the full briefing)
 - `hint` — reveal the next hint (each one costs points)
 - `submit FLAG{...}` — submit a flag you found
-- `status` — your time, hints and score
+- `status` — your time, hints and score for this level
+- `summary` — the scoring screen: every level's time, hints and score
 - `levels` — list levels and switch to an unlocked one
 - `reset` — restore the current level's files to their starting state
 - `help` — list every command; `man <name>` or `<name> --help` for details
@@ -57,10 +59,11 @@ src/
     system/          user/group database, sudoers, the Ubuntu-like base machine image
     shell/           lexer, parser, expansion, glob, executor, interactive Shell, completion
     network/         hosts with IPs, DNS, per-interface reachability, services, HTTP, pcap
+    crypto/          digests, hash identification, OpenSSL AES container, a simplified GPG
     commands/        one file per command, a shared Command interface, GNU-style option parsing
       game/          mission, hint, submit, status, reset, levels
     game/            Game orchestrator, level model, scoring, flags, storage, events
-  levels/            Chapter 1 and 2 levels (self-contained data) + coming-soon stubs
+  levels/            all 11 levels, each self-contained data
   ui/                xterm Terminal, LineEditor, keymap, Panels/HUD, boot sequence, touch keys
   content/           strings.ts (UI chrome, i18n-ready) and ASCII banners
   styles/            design tokens and layout
@@ -74,6 +77,10 @@ Key rules (enforced, see `CLAUDE.md`):
   Content-Security-Policy with `connect-src 'none'`.
 - Error messages match real bash/coreutils output (`cat: x: No such file or directory`,
   `bash: x: command not found`, `Permission denied`) — reading real errors is part of the learning.
+- **Cryptography is real where it reasonably can be.** The digest commands compute genuine MD5 /
+  SHA-1 / SHA-256 / SHA-512, and `openssl enc` writes the real OpenSSL `Salted__` container with
+  EVP_BytesToKey derivation — a file encrypted in the game decrypts with a real `openssl` on a real
+  machine. Only `gpg` is a simplified stand-in, and its man page says so.
 - Flags never appear as plaintext in the build: levels store a SHA-256 `flagHash`, flag-bearing story
   files are imported with `?sealed` (scrambled at build time), and `npm run build` fails if any
   `FLAG{...}` slips into `dist/`. The plaintext flags live only in test-only `solution.ts` files.
@@ -90,7 +97,10 @@ Programs: `ls`, `cat`, `file`, `strings`, `grep`, `head`, `tail`, `wc`, `sort`, 
 Networking: `ip` (`a`/`route`), `ifconfig`, `ping`, `nmap` (`-p`, `-sV`, `-F`, CIDR sweeps),
 `netstat`, `ss`, `ssh`, `nc`, `curl`, `wget`, `dig`, `nslookup`, `tcpdump -r`.
 
-Game commands: `mission`, `hint`, `submit`, `status`, `reset`, `levels`.
+Cryptography: `md5sum`, `sha1sum`, `sha256sum`, `sha512sum` (with `-c`), `xxd`, `tr`, `openssl`
+(`enc`, `dgst`), `john`, `gpg`.
+
+Game commands: `mission`, `hint`, `submit`, `status`, `summary`, `reset`, `levels`.
 
 Every command supports `--help` and has a `man` page. The shell supports pipes (`|`), redirects
 (`>`, `>>`, `<`, `2>`, `2>&1`, `&>`), command lists (`;`, `&&`, `||`), single/double quotes, backslash
@@ -145,6 +155,8 @@ You are a junior security analyst hired to investigate NovaCorp, a company suspe
 customer data. Chapter 1 takes you from a hidden note on an old workstation, through a break-in
 buried in a server's logs, to a locked account whose password was left in a world-readable backup.
 Chapter 2 moves onto the network: you map the office LAN, find a service parked on an odd port,
-pivot through a jump host into a segmented server network, and finally pull a cleartext credential
-out of a packet capture. All hosts, addresses and domains are reserved for documentation
+pivot through a jump host into a segmented server network, and pull a cleartext credential out of a
+packet capture. Chapter 3 closes the case with cryptography: a checksum manifest exposes a tampered
+delivery, a wordlist breaks a reused password, an AES archive gives up the export itself, and a PGP
+key decrypts the final report. All hosts, addresses and domains are reserved for documentation
 (RFC 5737 / RFC 1918, `.example`, `.internal`) — nothing here points at a real system.

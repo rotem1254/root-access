@@ -1,0 +1,121 @@
+import { describe, expect, it } from 'vitest';
+import { renderSummary } from '../../../src/engine/commands/game/summary';
+import type { RunSummary } from '../../../src/engine/game/api';
+import { LEVELS } from '../../../src/levels';
+import { SOLUTION as SOLUTION1 } from '../../../src/levels/level01/solution';
+import { createGame, storageStartingAt } from '../../helpers/game';
+
+const ROW = {
+  id: 'x',
+  number: 1,
+  chapter: 1,
+  title: 'A Level',
+  completed: true,
+  hintsUsed: 1,
+  elapsedMs: 65_000,
+  score: 90,
+};
+
+describe('renderSummary', () => {
+  it('renders every level, the totals and a rank', () => {
+    const summary: RunSummary = {
+      rows: [ROW, { ...ROW, id: 'y', number: 2, chapter: 2, title: 'Another', score: 100 }],
+      levelsCompleted: 2,
+      levelsTotal: 2,
+      totalScore: 190,
+      maxScore: 300,
+      totalHints: 2,
+      totalMs: 130_000,
+      complete: true,
+    };
+    const text = renderSummary(summary, 80);
+    expect(text).toContain('RUN SUMMARY');
+    expect(text).toContain('A Level');
+    expect(text).toContain('Another');
+    expect(text).toContain('Chapter 1');
+    expect(text).toContain('Chapter 2');
+    expect(text).toContain('1:05'); // per-level time
+    expect(text).toContain('2:10'); // total time
+    expect(text).toContain('Levels captured 2/2');
+    expect(text).toContain('Rank: TRAINEE'); // 190/300 is 63%
+  });
+
+  it('ranks by the share of the maximum score', () => {
+    const base: RunSummary = {
+      rows: [],
+      levelsCompleted: 1,
+      levelsTotal: 1,
+      totalScore: 0,
+      maxScore: 100,
+      totalHints: 0,
+      totalMs: 0,
+      complete: true,
+    };
+    expect(renderSummary({ ...base, totalScore: 95 }, 80)).toContain('OPERATOR');
+    expect(renderSummary({ ...base, totalScore: 80 }, 80)).toContain('ANALYST');
+    expect(renderSummary({ ...base, totalScore: 60 }, 80)).toContain('TRAINEE');
+    expect(renderSummary({ ...base, totalScore: 10 }, 80)).toContain('RECRUIT');
+    expect(renderSummary({ ...base, complete: false }, 80)).toContain('In progress');
+    expect(renderSummary({ ...base, maxScore: 0 }, 80)).toContain('RECRUIT');
+  });
+
+  it('truncates a long title and survives a narrow terminal', () => {
+    const summary: RunSummary = {
+      rows: [{ ...ROW, title: 'A very long level title that will not fit in a narrow column' }],
+      levelsCompleted: 1,
+      levelsTotal: 1,
+      totalScore: 90,
+      maxScore: 150,
+      totalHints: 1,
+      totalMs: 65_000,
+      complete: true,
+    };
+    expect(renderSummary(summary, 40)).toContain('...');
+    expect(renderSummary(summary, 200)).toContain('A very long level title');
+  });
+});
+
+describe('game.runSummary()', () => {
+  it('reports an empty run, then the captured level', async () => {
+    const h = await createGame(LEVELS);
+    const before = h.game.runSummary();
+    expect(before.levelsTotal).toBe(LEVELS.length);
+    expect(before.levelsCompleted).toBe(0);
+    expect(before.complete).toBe(false);
+    expect(before.maxScore).toBe(LEVELS.length * 150);
+
+    for (const line of SOLUTION1) await h.run(line);
+    const after = h.game.runSummary();
+    expect(after.levelsCompleted).toBe(1);
+    expect(after.rows[0]).toMatchObject({ id: '01-hidden-in-plain-sight', completed: true });
+    expect(after.totalScore).toBeGreaterThan(0);
+    expect(after.complete).toBe(false);
+  });
+
+  it('the summary command prints the table', async () => {
+    const h = await createGame(LEVELS);
+    const out = await h.run('summary');
+    expect(out.stdout).toContain('RUN SUMMARY');
+    expect(out.stdout).toContain('Hidden in Plain Sight');
+    expect(out.stdout).toContain('Levels captured 0/11');
+  });
+
+  it('emits run-complete and reports complete once the last level is captured', async () => {
+    // Start on the final level with every earlier one already captured.
+    const lastId = LEVELS[LEVELS.length - 1]?.id ?? '';
+    const h = await createGame(LEVELS, { storage: await storageStartingAt(LEVELS, lastId) });
+    expect(h.game.runSummary().complete).toBe(false);
+    expect(h.game.runSummary().levelsCompleted).toBe(LEVELS.length - 1);
+
+    const { FLAG } = await import('../../../src/levels/level11/solution');
+    await h.run(`submit ${FLAG}`);
+    const summary = h.game.runSummary();
+    expect(summary.complete).toBe(true);
+    expect(summary.levelsCompleted).toBe(LEVELS.length);
+    expect(h.events).toContainEqual({ type: 'run-complete', totalScore: summary.totalScore });
+    // The scoring screen now shows the finished run.
+    expect((await h.run('summary')).stdout).toContain(
+      `Levels captured ${LEVELS.length}/${LEVELS.length}`,
+    );
+  });
+});

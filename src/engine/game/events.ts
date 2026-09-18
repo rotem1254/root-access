@@ -13,6 +13,8 @@ export type GameEvent =
       newSkills: string[];
       nextLevelId: string | null;
     }
-  | { type: 'level-reset'; levelId: string };
+  | { type: 'level-reset'; levelId: string }
+  /** Every playable level has been captured. */
+  | { type: 'run-complete'; totalScore: number };
 
 export type GameListener = (event: GameEvent) => void;

@@ -13,6 +13,8 @@ import type {
   LevelState,
   LevelSummary,
   MissionInfo,
+  RunRow,
+  RunSummary,
   StartLevelResult,
   StatusInfo,
   SubmitResult,
@@ -20,7 +22,7 @@ import type {
 import type { GameEvent, GameListener } from './events';
 import { checkFlag } from './flag';
 import { isStub, type Level, type LevelCatalog, type LevelEntry, localize } from './level';
-import { computeScore } from './scoring';
+import { computeScore, SCORING } from './scoring';
 import {
   emptySave,
   type GameStorage,
@@ -124,6 +126,7 @@ export class Game {
       },
       levels: () => this.levels(),
       startLevel: (idOrNumber) => this.requestStartLevel(idOrNumber),
+      runSummary: () => this.runSummary(),
     };
   }
 
@@ -368,6 +371,8 @@ export class Game {
     await this.persist();
     if (newSkills.length > 0) this.emit({ type: 'skills-unlocked', skills: newSkills });
     this.emit({ type: 'flag-captured', levelId: level.id, score, newSkills, nextLevelId });
+    const summary = this.runSummary();
+    if (summary.complete) this.emit({ type: 'run-complete', totalScore: summary.totalScore });
     return { status: 'captured', levelId: level.id, score, nextLevelId };
   }
 
@@ -429,6 +434,38 @@ export class Game {
       if (entry && !isStub(entry) && !this.isCompleted(entry.id)) return false;
     }
     return true;
+  }
+
+  /** The end-of-run scoring screen: one row per playable level, plus totals. */
+  runSummary(): RunSummary {
+    const playable = this.catalog.filter((entry): entry is Level => !isStub(entry));
+    const rows: RunRow[] = playable.map((level, index) => {
+      const progress = this.save.progress[level.id];
+      const completed = progress?.completedAt !== undefined;
+      // The level in play has not been saved yet, so read its live timer.
+      const live = level.id === this.currentLevel.id;
+      return {
+        id: level.id,
+        number: this.levelNumber(level.id) || index + 1,
+        chapter: level.chapter,
+        title: localize(level.title, this.locale),
+        completed,
+        hintsUsed: live ? this.revealed.length : (progress?.hintsUsed ?? 0),
+        elapsedMs: live ? this.activeMs() : (progress?.activeMs ?? 0),
+        score: progress?.score?.total ?? 0,
+      };
+    });
+    const completedRows = rows.filter((row) => row.completed);
+    return {
+      rows,
+      levelsCompleted: completedRows.length,
+      levelsTotal: rows.length,
+      totalScore: rows.reduce((sum, row) => sum + row.score, 0),
+      maxScore: rows.length * (SCORING.base + SCORING.maxSpeedBonus),
+      totalHints: rows.reduce((sum, row) => sum + row.hintsUsed, 0),
+      totalMs: rows.reduce((sum, row) => sum + row.elapsedMs, 0),
+      complete: rows.length > 0 && completedRows.length === rows.length,
+    };
   }
 
   levels(): readonly LevelSummary[] {

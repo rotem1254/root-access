@@ -1,0 +1,12 @@
+customer_id,region,plan,renewal
+4471,EMEA,enterprise,2026-08-01
+4472,APAC,growth,2026-09-14
+4473,EMEA,enterprise,2026-11-02
+4474,AMER,growth,2026-07-19
+
+# --- appended 2026-03-02 03:11 by export-runner ---
+# This block is not part of the vendor delivery. Someone added it after the
+# manifest was signed, which is why only this file fails its checksum.
+#
+# staging_bucket=s3://novacorp-staging/adhoc/
+# audit_token=FLAG{0n3_byt3_0ff}

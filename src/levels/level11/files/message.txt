@@ -1,0 +1,22 @@
+From: Alex Mercer
+To: you
+Subject: Close it out
+
+If you are reading this, you have the key, the passphrase, and everything else.
+
+Here is where the investigation landed. The export was requested over chat by
+someone impersonating a director, run by an account whose password was in every
+wordlist on the internet, moved through a jump host that bridged two networks it
+should never have bridged, and sent over plain HTTP to a bucket whose retention
+purge had been switched off four months earlier.
+
+No single failure did this. Six ordinary ones, lined up, did.
+
+Case seal — submit this and we are done:
+
+    FLAG{k3y_b3f0r3_p4ssphr4s3}
+
+Good work. Write it up properly: the evidence, the order, and what you would
+change first. That last part is the job.
+
+— Alex

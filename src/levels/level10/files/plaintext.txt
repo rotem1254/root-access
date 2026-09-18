@@ -1,0 +1,17 @@
+NovaCorp — Q3 adhoc export (decrypted)
+======================================
+
+  Requested by : chat message, no ticket
+  Run by       : mreyes
+  Rows         : 48,219 customer records
+  Destination  : s3://novacorp-staging/adhoc/
+  Retention    : none — the purge job has been disabled since 2025-11-02
+
+This is the file that left the building. It is the whole case.
+
+Evidence seal:
+
+    FLAG{s4lt3d__4nd_0p3n3d}
+
+Whoever encrypted this did the right thing with the wrong file: the archive was
+protected, and then the passphrase was written down next to it.
