@@ -13,6 +13,14 @@ is simulated (a real implementation is out of scope), and its man page says so p
 New dependency: `@noble/ciphers` (AES-CBC), alongside the existing `@noble/hashes` (md5/sha1 come
 from its `legacy` module).
 
+## Progress
+
+- [x] 1. Crypto utilities (digests, hash identification, OpenSSL container, GPG stand-in)
+- [x] 2. Commands (md5sum/sha1sum/sha256sum/sha512sum, xxd, tr, openssl, john, gpg)
+- [x] 3. Chapter 3 content (4 levels + solvability and anti-shortcut tests)
+- [x] 4. Scoring screen (`summary`, run-complete, rank)
+- [x] 5. README, Definition-of-Done pass, Phase 3 report
+
 ## Steps
 
 1. **Crypto utilities** (`src/engine/crypto/`) — digests, hash identification, OpenSSL
