@@ -32,6 +32,17 @@ src/engine/network/
 - **Reachability** is decided by the `Network` from the *current* host, so firewalled segments make
   lateral movement meaningful (you must land on host B to reach host C).
 
+## Progress
+
+- [x] 1. Network model (Network, services, HTTP responder, pcap container)
+- [x] 2. Multi-machine refactor (session.machine, ssh push/pop, snapshot per host)
+- [x] 3. Recon commands (ifconfig, ip, ping, nmap, netstat, ss, hostname -I)
+- [x] 4. Connectivity commands (ssh, dig, nslookup, nc, curl, wget, tcpdump -r)
+- [x] 5. Chapter 2 content (4 levels + solvability and anti-shortcut tests)
+- [x] 6. README, Definition-of-Done pass, Phase 2 report
+
+Phase 2 work happens on branch `phase-2`, merged into `main` once the phase report is accepted.
+
 ## Steps
 
 1. **Network model** — `Network`, `Service`, host network metadata, DNS, reachability, port scan
@@ -76,4 +87,15 @@ src/engine/network/
   file and prints its progress summary.
 - Addresses: gateway `10.10.0.1`, hosts in `10.10.0.0/24` and a segmented `10.10.9.0/24`; documentation
   ranges for anything "external". Hostnames under `.novacorp.internal`.
-```
+
+## Decisions made while building
+
+- **Reachability is per interface, not per host.** A target IP is reachable only when the source has
+  an interface on *that IP's* subnet. Checking "do these hosts share any subnet" let a workstation
+  reach the far side of a dual-homed host, which would have defeated the whole pivot puzzle.
+- **A hostname resolves to its primary (first) interface**, like a single DNS A record. Resolving a
+  dual-homed name to its last interface pointed callers at the unreachable side.
+- **HTTP bodies are byte strings** and a route body may be sealed, so a flag on a page stays out of
+  the bundle and non-ASCII text survives without being encoded twice.
+- **The save file stores the host per shell session**, so a save made mid-pivot restores onto the
+  right machine. Only the start host's filesystem is snapshotted (see known limitations).
