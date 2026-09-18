@@ -1,21 +1,45 @@
 import { base64Decode } from '../util/base64';
 import { type ByteString, utf8Encode } from '../util/bytes';
-import { isSealed, unseal } from '../util/seal';
-import type { HttpRoute, HttpSite } from './types';
+import { isSealed, type Sealed, unseal } from '../util/seal';
+import type { HttpRequestInfo, HttpSite } from './types';
 
 /**
- * A route body as bytes. A sealed body (used so a flag in a page never appears as plaintext in the
+ * A body as bytes. A sealed body (used so a flag in a page never appears as plaintext in the
  * bundle) is already a byte string; an author-written string is UTF-8 encoded here. Returning bytes
  * keeps callers from encoding twice, which mangled every non-ASCII character.
  */
-function bodyOf(route: HttpRoute): ByteString {
-  return isSealed(route.body) ? unseal(route.body) : utf8Encode(route.body);
+function bodyOf(body: string | Sealed): ByteString {
+  return isSealed(body) ? unseal(body) : utf8Encode(body);
+}
+
+/** Splits `/path?a=1&b=2` into its path and decoded query parameters. */
+export function splitQuery(target: string): { path: string; query: Record<string, string> } {
+  const mark = target.indexOf('?');
+  if (mark < 0) return { path: target, query: {} };
+  const query: Record<string, string> = {};
+  for (const pair of target.slice(mark + 1).split('&')) {
+    if (pair === '') continue;
+    const equals = pair.indexOf('=');
+    const rawKey = equals < 0 ? pair : pair.slice(0, equals);
+    const rawValue = equals < 0 ? '' : pair.slice(equals + 1);
+    try {
+      query[decodeURIComponent(rawKey.replace(/\+/g, ' '))] = decodeURIComponent(
+        rawValue.replace(/\+/g, ' '),
+      );
+    } catch {
+      query[rawKey] = rawValue;
+    }
+  }
+  return { path: target.slice(0, mark), query };
 }
 
 export interface HttpRequest {
   method: string;
+  /** May include a query string; it is split out before the route is matched. */
   path: string;
   headers: Readonly<Record<string, string>>;
+  /** Request body, e.g. what `curl -d` sent. */
+  body?: string;
 }
 
 export interface HttpResponse {
@@ -60,7 +84,8 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
     Server: server,
     'Content-Type': 'text/html',
   });
-  const path = request.path === '' ? '/' : request.path;
+  const { path: rawPath, query } = splitQuery(request.path);
+  const path = rawPath === '' ? '/' : rawPath;
   const route =
     site.routes[path] ?? site.routes[path.replace(/\/$/, '')] ?? site.routes[`${path}/`];
   if (!route) {
@@ -86,9 +111,36 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
       };
     }
   }
+  if (route.handler) {
+    const info: HttpRequestInfo = {
+      method: request.method,
+      path,
+      query,
+      headers: request.headers,
+      body: request.body ?? '',
+    };
+    const result = route.handler(info);
+    const status = result.status ?? route.status ?? 200;
+    const headers: Record<string, string> = {
+      ...baseHeaders(),
+      ...route.headers,
+      ...result.headers,
+    };
+    const body = bodyOf(result.body);
+    headers['Content-Length'] = String(body.length);
+    return { status, statusText: statusText(status), headers, body };
+  }
+  if (route.body === undefined) {
+    return {
+      status: 500,
+      statusText: statusText(500),
+      headers: baseHeaders(),
+      body: utf8Encode('<html><head><title>500 Internal Server Error</title></head></html>\n'),
+    };
+  }
   const status = route.status ?? 200;
   const headers: Record<string, string> = { ...baseHeaders(), ...route.headers };
-  const body = bodyOf(route);
+  const body = bodyOf(route.body);
   headers['Content-Length'] = String(body.length);
   return { status, statusText: statusText(status), headers, body };
 }
