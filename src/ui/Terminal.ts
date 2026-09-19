@@ -300,6 +300,18 @@ export class Terminal {
     this.write(utf8Encode(text.endsWith('\n') ? text : `${text}\n`));
   }
 
+  /**
+   * Replaces the current input line with `text` (a scaffold from the command guide) without running
+   * it, so the player can review and press Enter. Ignored while the shell is busy or reading.
+   */
+  setInput(text: string): void {
+    if (this.shell.inputRequest.kind !== 'prompt' || this.secret) return;
+    this.editor.reset(text);
+    this.editor.point = text.length;
+    this.renderPrompt();
+    this.focus();
+  }
+
   motd(): void {
     const motd = this.shell.motd();
     if (motd) this.write(motd);

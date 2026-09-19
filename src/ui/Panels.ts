@@ -1,11 +1,12 @@
 import type { Game } from '../engine/game/Game';
 import type { GameEvent } from '../engine/game/events';
+import { searchGuide } from '../content/commandGuide';
 import { strings, type UIStrings } from '../content/strings';
 import { clear, el, on } from './dom';
 
-type TabId = 'mission' | 'story' | 'hints' | 'skills';
+type TabId = 'mission' | 'story' | 'hints' | 'skills' | 'guide';
 
-const TAB_ORDER: readonly TabId[] = ['mission', 'story', 'hints', 'skills'];
+const TAB_ORDER: readonly TabId[] = ['mission', 'story', 'hints', 'skills', 'guide'];
 
 /** The right-hand side panel: HUD plus Mission / Story / Hints / Skills tabs, keyboard-navigable. */
 export class Panels {
@@ -23,6 +24,7 @@ export class Panels {
   private readonly tabButtons = new Map<TabId, HTMLButtonElement>();
   private onFocusTerminal: () => void = () => undefined;
   private onLocaleChange: () => void = () => undefined;
+  private guideQuery = '';
 
   constructor(game: Game) {
     this.game = game;
@@ -40,6 +42,12 @@ export class Panels {
   setFocusTerminal(fn: () => void): void {
     this.onFocusTerminal = fn;
   }
+
+  /** Wires the "click an example to scaffold it into the terminal" behaviour of the guide. */
+  setInsertCommand(fn: (text: string) => void): void {
+    this.onInsertCommand = fn;
+  }
+  private onInsertCommand: (text: string) => void = () => undefined;
 
   /** Lets main.ts react to a language switch (set document dir/lang, redraw the toggle). */
   setLocaleChangeHandler(fn: () => void): void {
@@ -114,6 +122,7 @@ export class Panels {
       story: this.ui.tabs.story,
       hints: this.ui.tabs.hints,
       skills: this.ui.tabs.skills,
+      guide: this.ui.tabs.guide,
     };
     for (const [id, button] of this.tabButtons) button.textContent = labels[id];
   }
@@ -140,6 +149,9 @@ export class Panels {
         break;
       case 'skills':
         this.body.append(this.skillsView());
+        break;
+      case 'guide':
+        this.body.append(this.guideView());
         break;
     }
   }
@@ -224,6 +236,56 @@ export class Panels {
       });
       container.append(button);
     }
+    return container;
+  }
+
+  private guideView(): HTMLElement {
+    const container = el('div', { class: 'view' });
+    container.append(el('h2', { text: this.ui.tabs.guide }));
+
+    const search = el('input', {
+      class: 'guide-search',
+      attrs: {
+        type: 'search',
+        placeholder: this.ui.guide.searchPlaceholder,
+        'aria-label': this.ui.guide.searchPlaceholder,
+        dir: 'ltr',
+        value: this.guideQuery,
+      },
+    });
+    const results = el('div', { class: 'guide-results' });
+    const renderResults = (): void => {
+      clear(results);
+      const matches = searchGuide(this.guideQuery, this.game.locale);
+      if (matches.length === 0) {
+        results.append(el('p', { class: 'muted', text: this.ui.guide.noMatches }));
+        return;
+      }
+      let category = '';
+      for (const entry of matches) {
+        if (entry.category !== category) {
+          category = entry.category;
+          results.append(el('h3', { text: category }));
+        }
+        // Clicking an entry types its example into the terminal, so a beginner never has to.
+        const row = el('button', { class: 'guide-entry', type: 'button' }, [
+          el('code', { class: 'guide-name', text: entry.name, attrs: { dir: 'ltr' } }),
+          el('span', {
+            class: 'guide-desc',
+            text: this.game.locale === 'he' ? entry.he : entry.en,
+          }),
+          el('code', { class: 'guide-eg', text: entry.example, attrs: { dir: 'ltr' } }),
+        ]);
+        on(row, 'click', () => this.onInsertCommand(entry.example));
+        results.append(row);
+      }
+    };
+    on(search, 'input', () => {
+      this.guideQuery = search.value;
+      renderResults();
+    });
+    renderResults();
+    container.append(search, results);
     return container;
   }
 

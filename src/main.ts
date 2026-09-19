@@ -100,6 +100,8 @@ async function main(): Promise<void> {
   const term = terminal;
   const panels = new Panels(game);
   panels.setFocusTerminal(() => term.focus());
+  // Clicking a command in the guide scaffolds it into the terminal (the player presses Enter).
+  panels.setInsertCommand((text) => term.setInput(text));
 
   // Applies the current language to the whole document; the terminal pane is forced LTR in CSS.
   const applyLocale = (): void => {

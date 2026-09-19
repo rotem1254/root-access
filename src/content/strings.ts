@@ -8,7 +8,7 @@ export type Locale = 'en' | 'he';
 export interface UIStrings {
   appName: string;
   dir: 'ltr' | 'rtl';
-  tabs: { mission: string; story: string; hints: string; skills: string };
+  tabs: { mission: string; story: string; hints: string; skills: string; guide: string };
   hud: { level: string; time: string; hints: string; score: string; user: string };
   panel: {
     objective: string;
@@ -37,6 +37,7 @@ export interface UIStrings {
   buttons: { skipBoot: string; menu: string; hint: string; language: string };
   boot: { pressToSkip: string; ready: string };
   capture: { title: string; score: string; next: string };
+  guide: { searchPlaceholder: string; noMatches: string };
   welcome: {
     tagline: string;
     whatTitle: string;
@@ -53,7 +54,7 @@ export interface UIStrings {
 const en: UIStrings = {
   appName: 'ROOT_ACCESS',
   dir: 'ltr',
-  tabs: { mission: 'Mission', story: 'Story', hints: 'Hints', skills: 'Skills' },
+  tabs: { mission: 'Mission', story: 'Story', hints: 'Hints', skills: 'Skills', guide: 'Commands' },
   hud: { level: 'Level', time: 'Time', hints: 'Hints', score: 'Score', user: 'User' },
   panel: {
     objective: 'Objective',
@@ -82,6 +83,7 @@ const en: UIStrings = {
   buttons: { skipBoot: 'Skip', menu: 'Menu', hint: 'Hint', language: 'עברית' },
   boot: { pressToSkip: 'press any key to skip', ready: 'Ready.' },
   capture: { title: 'FLAG CAPTURED', score: 'Score', next: 'Next level unlocked' },
+  guide: { searchPlaceholder: 'Search commands…', noMatches: 'No commands match your search.' },
   welcome: {
     tagline: 'Learn real hacking by playing in a safe, simulated Linux terminal.',
     whatTitle: 'What is this?',
@@ -106,7 +108,7 @@ const en: UIStrings = {
 const he: UIStrings = {
   appName: 'ROOT_ACCESS',
   dir: 'rtl',
-  tabs: { mission: 'משימה', story: 'סיפור', hints: 'רמזים', skills: 'מיומנויות' },
+  tabs: { mission: 'משימה', story: 'סיפור', hints: 'רמזים', skills: 'מיומנויות', guide: 'פקודות' },
   hud: { level: 'שלב', time: 'זמן', hints: 'רמזים', score: 'ניקוד', user: 'משתמש' },
   panel: {
     objective: 'מטרה',
@@ -135,6 +137,7 @@ const he: UIStrings = {
   buttons: { skipBoot: 'דלג', menu: 'תפריט', hint: 'רמז', language: 'English' },
   boot: { pressToSkip: 'הקישו מקש כלשהו כדי לדלג', ready: 'מוכן.' },
   capture: { title: 'הדגל נלכד', score: 'ניקוד', next: 'השלב הבא נפתח' },
+  guide: { searchPlaceholder: 'חיפוש פקודות…', noMatches: 'אין פקודות שמתאימות לחיפוש.' },
   welcome: {
     tagline: 'ללמוד האקינג אמיתי דרך משחק, בטרמינל לינוקס מדומה ובטוח.',
     whatTitle: 'מה זה?',
