@@ -1,0 +1,11 @@
+Workspace tidy — the safe clicks open.
+
+You made a folder (mkdir), copied a file into it (cp), gave it a clear name
+(mv) and cleared the junk (rm). Those four verbs — plus touch, which creates an
+empty file — are how you shape a filesystem every day.
+
+Your flag:
+
+    FLAG{m0v3d_c0p13d_d0n3}
+
+Submit it:  submit FLAG{m0v3d_c0p13d_d0n3}

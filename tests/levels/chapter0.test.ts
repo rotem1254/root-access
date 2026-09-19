@@ -80,6 +80,11 @@ import {
   SHORTCUTS_THAT_FAIL as SHORTF,
 } from '../../src/levels/level00f/solution';
 import { FLAG as FLAGG, SOLUTION as SOLG } from '../../src/levels/level00g/solution';
+import {
+  FLAG as FLAGH,
+  SHORTCUTS_THAT_FAIL as SHORTH,
+  SOLUTION as SOLH,
+} from '../../src/levels/level00h/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -239,6 +244,34 @@ describe('Chapter 0 — the extra guided lessons', () => {
     // A naive cat in the home dir fails — the file really is buried.
     const out = await step(h, 'cat vault.bak');
     expect(out.stderr).toContain('No such file or directory');
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('lesson 8 (file management): mkdir, cp, mv and rm restore the backup', async () => {
+    const h = await tutorialAt('00h-making-files');
+    let captured = false;
+    for (const cmd of SOLH) {
+      const out = await step(h, cmd);
+      // The safe opens (and prints the flag) on the rename to vault/flag.txt.
+      if (cmd.startsWith('mv')) expect(out.stdout).toContain(FLAGH);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 8 coaches each step: mkdir -> cp -> mv', async () => {
+    const h = await tutorialAt('00h-making-files');
+    expect((await step(h, 'mkdir vault')).stdout).toContain('cp data.dat vault/');
+    expect((await step(h, 'cp data.dat vault/')).stdout).toContain(
+      'mv vault/data.dat vault/flag.txt',
+    );
+  });
+
+  it('lesson 8 cannot be shortcut: the flag lives in no file to cat', async () => {
+    const h = await tutorialAt('00h-making-files');
+    const out = await step(h, SHORTH[0]!);
+    expect(out.stdout).not.toContain(FLAGH);
     expect(h.game.status().completed).toBe(false);
   });
 });
