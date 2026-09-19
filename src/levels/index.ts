@@ -3,6 +3,7 @@ import { level00 } from './level00';
 import { level00b } from './level00b';
 import { level00c } from './level00c';
 import { level00d } from './level00d';
+import { level00e } from './level00e';
 import { level01 } from './level01';
 import { level02 } from './level02';
 import { level03 } from './level03';
@@ -46,6 +47,7 @@ export const LEVELS: LevelCatalog = [
   level00b,
   level00c,
   level00d,
+  level00e,
   level01,
   level02,
   level03,

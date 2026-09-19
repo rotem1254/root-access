@@ -98,7 +98,7 @@ const en: UIStrings = {
       'Each level hides a flag that looks like FLAG{...}. Hand it in with `submit FLAG{...}` to win.',
     ],
     lessonsNote:
-      'Never used a terminal? Perfect. The first four lessons teach you everything from zero — one command at a time.',
+      'Never used a terminal? Perfect. The first few lessons teach you everything from zero — one command at a time.',
     start: 'Start playing',
     reopen: 'How to play',
     dialogLabel: 'Welcome and how to play',
@@ -151,7 +151,7 @@ const he: UIStrings = {
       'בכל שלב מוסתר דגל שנראה כמו FLAG{...}. הגישו אותו עם `submit FLAG{...}` כדי לנצח.',
     ],
     lessonsNote:
-      'לא נגעתם בטרמינל מעולם? מצוין. ארבעת השיעורים הראשונים מלמדים אתכם הכול מאפס — פקודה אחת בכל פעם.',
+      'לא נגעתם בטרמינל מעולם? מצוין. השיעורים המודרכים הראשונים מלמדים אתכם הכול מאפס — פקודה אחת בכל פעם.',
     start: 'להתחיל לשחק',
     reopen: 'איך משחקים',
     dialogLabel: 'ברוכים הבאים ואיך משחקים',

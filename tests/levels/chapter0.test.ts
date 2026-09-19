@@ -73,6 +73,7 @@ describe('Chapter 0 — the tutorial', () => {
 import { FLAG as FLAGB, SOLUTION as SOLB } from '../../src/levels/level00b/solution';
 import { FLAG as FLAGC, SOLUTION as SOLC } from '../../src/levels/level00c/solution';
 import { FLAG as FLAGD, SOLUTION as SOLD } from '../../src/levels/level00d/solution';
+import { FLAG as FLAGE, SOLUTION as SOLE } from '../../src/levels/level00e/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -147,5 +148,25 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00d-pipes');
     expect((await step(h, 'ls')).stdout).toContain('ls | grep key');
     expect((await step(h, 'ls | grep key')).stdout).toContain('cat keycard.txt');
+  });
+
+  it('lesson 5 (permissions): chmod then read', async () => {
+    const h = await tutorialAt('00e-permissions');
+    // Before chmod, the file cannot be read.
+    expect((await step(h, 'cat locked.txt')).stderr).toContain('Permission denied');
+    let captured = false;
+    for (const cmd of SOLE) {
+      const out = await step(h, cmd);
+      if (cmd === 'cat locked.txt') expect(out.stdout).toContain(FLAGE);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 5 coaches: cat is denied until chmod, then points at the file', async () => {
+    const h = await tutorialAt('00e-permissions');
+    expect((await step(h, 'cat locked.txt')).stdout).toContain('chmod +r locked.txt');
+    expect((await step(h, 'chmod +r locked.txt')).stdout).toContain('cat locked.txt');
   });
 });

@@ -1,0 +1,12 @@
+You changed a file's permissions and then read it — nicely done.
+
+Every file has permissions: who may read (r), write (w) and execute (x) it.
+`ls -l` shows them at the start of each line, like  -rw-r--r--  . This file
+started with none at all (----------), so even you could not read it — until you
+added read permission with chmod.
+
+Your flag:
+
+    FLAG{ch4ng3_th3_m0d3}
+
+Submit it:  submit FLAG{ch4ng3_th3_m0d3}
