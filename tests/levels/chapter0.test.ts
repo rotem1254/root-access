@@ -74,6 +74,11 @@ import { FLAG as FLAGB, SOLUTION as SOLB } from '../../src/levels/level00b/solut
 import { FLAG as FLAGC, SOLUTION as SOLC } from '../../src/levels/level00c/solution';
 import { FLAG as FLAGD, SOLUTION as SOLD } from '../../src/levels/level00d/solution';
 import { FLAG as FLAGE, SOLUTION as SOLE } from '../../src/levels/level00e/solution';
+import {
+  FLAG as FLAGF,
+  PASSWORD as PWF,
+  SHORTCUTS_THAT_FAIL as SHORTF,
+} from '../../src/levels/level00f/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -168,5 +173,42 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00e-permissions');
     expect((await step(h, 'cat locked.txt')).stdout).toContain('chmod +r locked.txt');
     expect((await step(h, 'chmod +r locked.txt')).stdout).toContain('cat locked.txt');
+  });
+
+  it('lesson 6 (sudo): read a root-only file by borrowing root with sudo', async () => {
+    const h = await tutorialAt('00f-becoming-root');
+    // Reading the root-owned file directly is refused.
+    expect((await step(h, 'cat /root/flag.txt')).stderr).toContain('Permission denied');
+    await step(h, 'whoami');
+    await step(h, 'id');
+    // sudo prompts for the player's own password; answer it, then the flag appears.
+    h.take();
+    await h.game.shell.submit('sudo cat /root/flag.txt');
+    expect(h.game.shell.inputRequest.kind).toBe('read');
+    await h.game.shell.submit(PWF);
+    await h.game.shell.whenReady();
+    expect(h.take().stdout).toContain(FLAGF);
+    const submitOut = await step(h, `submit ${FLAGF}`);
+    expect(submitOut.stdout).toContain('Level captured!');
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 6 coaches: a denied cat points at sudo', async () => {
+    const h = await tutorialAt('00f-becoming-root');
+    expect((await step(h, 'cat /root/flag.txt')).stdout).toContain('sudo cat /root/flag.txt');
+  });
+
+  it('coaching keeps non-ASCII intact (Hebrew, em dashes) through the UTF-8 byte pipe', async () => {
+    const h = await tutorialAt('00f-becoming-root');
+    h.game.setLocale('he');
+    // The Hebrew coaching must survive the encode-in / decode-out round trip verbatim.
+    expect((await step(h, 'whoami')).stdout).toContain('בדקו את הקבוצות');
+  });
+
+  it('lesson 6 rejects reading the root file without sudo', async () => {
+    const h = await tutorialAt('00f-becoming-root');
+    const denied = await step(h, SHORTF[0]!);
+    expect(denied.stderr).toContain('Permission denied');
+    expect(h.game.status().completed).toBe(false);
   });
 });

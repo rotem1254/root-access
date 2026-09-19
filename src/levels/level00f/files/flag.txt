@@ -1,0 +1,15 @@
+You ran a command as root — that is exactly what sudo is for.
+
+Some files belong to the "root" superuser and nobody else may read them, no
+matter what permissions you hold. `sudo` lets a trusted user run ONE command as
+root after proving who they are with THEIR OWN password. `sudo -l` shows what
+you are allowed to run; membership in the "sudo" group here means "anything".
+
+Handle this power carefully on real systems: as root there is nothing to stop a
+mistake.
+
+Your flag:
+
+    FLAG{w1th_gr34t_p0w3r}
+
+Submit it:  submit FLAG{w1th_gr34t_p0w3r}

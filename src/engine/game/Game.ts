@@ -4,6 +4,7 @@ import { Shell, type ShellHooks } from '../shell/Shell';
 import { buildNetwork, type Machine } from '../system/Machine';
 import type { Network } from '../network/Network';
 import type { HostDefinition } from '../system/host';
+import { utf8Encode } from '../util/bytes';
 import type { Clock } from '../util/clock';
 import { ManualClock } from '../util/clock';
 import { sha256Hex } from '../util/sha256';
@@ -199,7 +200,9 @@ export class Game {
             cwd: command.cwd,
           },
           {
-            echo: (text) => this.io.stdout(text.endsWith('\n') ? text : `${text}\n`),
+            // io.stdout expects a UTF-8 byte-string (like command output), so encode the hook's
+            // JS string — otherwise non-ASCII coaching (em dashes, all Hebrew) renders as garbage.
+            echo: (text) => this.io.stdout(utf8Encode(text.endsWith('\n') ? text : `${text}\n`)),
             once: (key) => {
               if (this.onceKeys.has(key)) return false;
               this.onceKeys.add(key);
