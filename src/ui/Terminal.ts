@@ -34,6 +34,33 @@ const THEME = {
   brightWhite: '#eafff2',
 };
 
+/** A pure-black, maximum-contrast palette (WCAG AAA-ish) for the high-contrast setting. */
+const HIGH_CONTRAST_THEME = {
+  background: '#000000',
+  foreground: '#ffffff',
+  cursor: '#00ff66',
+  cursorAccent: '#000000',
+  selectionBackground: '#0060a0',
+  black: '#000000',
+  red: '#ff5c5c',
+  green: '#5cff8f',
+  yellow: '#ffe14d',
+  blue: '#6cb2ff',
+  magenta: '#e59bff',
+  cyan: '#5ef2e6',
+  white: '#ffffff',
+  brightBlack: '#b8c2bd',
+  brightRed: '#ff8a8a',
+  brightGreen: '#8dffb3',
+  brightYellow: '#fff08a',
+  brightBlue: '#a9d2ff',
+  brightMagenta: '#f0c2ff',
+  brightCyan: '#9df6ee',
+  brightWhite: '#ffffff',
+};
+
+const BASE_FONT_SIZE = 14;
+
 const ANSI_SGR = new RegExp(String.raw`\x1b\[[0-9;]*m`, 'g');
 
 /** Number of visible columns a string occupies, ignoring ANSI escape sequences. */
@@ -329,6 +356,19 @@ export class Terminal {
     } catch {
       // container not laid out yet
     }
+  }
+
+  /** Scales the terminal font (accessibility). 1 = default 14px. Refits the grid afterwards. */
+  setFontScale(scale: number): void {
+    const size = Math.max(9, Math.round(BASE_FONT_SIZE * scale));
+    if (this.xterm.options.fontSize === size) return;
+    this.xterm.options.fontSize = size;
+    this.refit();
+  }
+
+  /** Switches the terminal palette between the default and the high-contrast theme. */
+  setHighContrast(on: boolean): void {
+    this.xterm.options.theme = on ? HIGH_CONTRAST_THEME : THEME;
   }
 
   dispose(): void {

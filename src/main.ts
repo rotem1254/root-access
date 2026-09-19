@@ -11,6 +11,7 @@ import { el, isTouchDevice, on } from './ui/dom';
 import { Panels } from './ui/Panels';
 import { Terminal } from './ui/Terminal';
 import { createTouchKeys } from './ui/TouchKeys';
+import { Settings } from './ui/settings';
 import { openWelcome } from './ui/Welcome';
 import { KeyValueStorage } from './engine/game';
 
@@ -118,6 +119,8 @@ async function main(): Promise<void> {
     help.title = ui.welcome.reopen;
     practice.textContent = `🧪 ${ui.buttons.practice}`;
     practice.setAttribute('aria-label', ui.buttons.practice);
+    settingsButton.setAttribute('aria-label', ui.settings.open);
+    settingsButton.title = ui.settings.open;
   };
 
   // Skip link: first Tab stop, jumps straight to the terminal.
@@ -154,11 +157,21 @@ async function main(): Promise<void> {
     term.focus();
   });
 
+  // Accessibility: adjustable text size and high contrast, applied live and persisted.
+  const settings = new Settings(term, () => game.locale);
+  const settingsButton = el('button', { class: 'settings-toggle', type: 'button', text: '⚙' });
+  on(settingsButton, 'click', () => {
+    void settings.open().then(() => term.focus());
+  });
+
   panels.setLocaleChangeHandler(applyLocale);
-  app.append(skip, terminalPane, panels.root, toggle, language, help, practice);
+  app.append(skip, terminalPane, panels.root, toggle, language, help, practice, settingsButton);
   if (isTouchDevice())
     terminalPane.append(createTouchKeys(terminal, strings(game.locale).a11y.touchKeysLabel));
   applyLocale();
+
+  // Apply saved accessibility preferences (text size, contrast) now that the terminal is mounted.
+  settings.apply();
 
   // Repaint the panel roughly once a second so the timer ticks.
   panels.render();

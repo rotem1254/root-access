@@ -3,7 +3,16 @@
   --bg: #05080a;
   --fg: #c8f7d8;
   --accent: #39ff88;
+  /* Panel reading text scales with this (accessibility). The terminal scales via xterm directly. */
+  --ui-scale: 1;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+/* High-contrast display setting: pure-black surfaces, bright text, stronger edges. */
+:root[data-contrast='high'] {
+  --bg: #000000;
+  --fg: #ffffff;
+  --accent: #00ff66;
 }
 
 html,

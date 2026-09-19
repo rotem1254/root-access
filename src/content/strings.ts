@@ -38,6 +38,19 @@ export interface UIStrings {
   boot: { pressToSkip: string; ready: string };
   capture: { title: string; score: string; next: string };
   guide: { searchPlaceholder: string; noMatches: string };
+  settings: {
+    title: string;
+    textSize: string;
+    sizeSmall: string;
+    sizeMedium: string;
+    sizeLarge: string;
+    sizeXLarge: string;
+    contrast: string;
+    contrastNormal: string;
+    contrastHigh: string;
+    open: string;
+    done: string;
+  };
   welcome: {
     tagline: string;
     whatTitle: string;
@@ -90,6 +103,19 @@ const en: UIStrings = {
   boot: { pressToSkip: 'press any key to skip', ready: 'Ready.' },
   capture: { title: 'FLAG CAPTURED', score: 'Score', next: 'Next level unlocked' },
   guide: { searchPlaceholder: 'Search commands…', noMatches: 'No commands match your search.' },
+  settings: {
+    title: 'Display settings',
+    textSize: 'Text size',
+    sizeSmall: 'Small',
+    sizeMedium: 'Medium',
+    sizeLarge: 'Large',
+    sizeXLarge: 'Extra large',
+    contrast: 'Contrast',
+    contrastNormal: 'Normal',
+    contrastHigh: 'High contrast',
+    open: 'Display settings',
+    done: 'Done',
+  },
   welcome: {
     tagline: 'Learn real hacking by playing in a safe, simulated Linux terminal.',
     whatTitle: 'What is this?',
@@ -144,6 +170,19 @@ const he: UIStrings = {
   boot: { pressToSkip: 'הקישו מקש כלשהו כדי לדלג', ready: 'מוכן.' },
   capture: { title: 'הדגל נלכד', score: 'ניקוד', next: 'השלב הבא נפתח' },
   guide: { searchPlaceholder: 'חיפוש פקודות…', noMatches: 'אין פקודות שמתאימות לחיפוש.' },
+  settings: {
+    title: 'הגדרות תצוגה',
+    textSize: 'גודל טקסט',
+    sizeSmall: 'קטן',
+    sizeMedium: 'רגיל',
+    sizeLarge: 'גדול',
+    sizeXLarge: 'גדול מאוד',
+    contrast: 'ניגודיות',
+    contrastNormal: 'רגילה',
+    contrastHigh: 'ניגודיות גבוהה',
+    open: 'הגדרות תצוגה',
+    done: 'סיום',
+  },
   welcome: {
     tagline: 'ללמוד האקינג אמיתי דרך משחק, בטרמינל לינוקס מדומה ובטוח.',
     whatTitle: 'מה זה?',
