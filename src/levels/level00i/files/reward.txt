@@ -1,0 +1,13 @@
+Noise collapsed — the analysis console unlocks.
+
+You just did what a security analyst does every day: take a flood of log lines
+and boil it down to what is distinct. `wc -l` counts the flood, `sort` groups
+identical lines together, and `uniq` collapses each group to one. Add `-c` and
+uniq counts them, so `sort file | uniq -c | sort -rn` ranks lines from most to
+least common — the fastest way to spot the odd one, or the noisiest source.
+
+Your flag:
+
+    FLAG{c0unt_th3_n01s3}
+
+Submit it:  submit FLAG{c0unt_th3_n01s3}

@@ -85,6 +85,11 @@ import {
   SHORTCUTS_THAT_FAIL as SHORTH,
   SOLUTION as SOLH,
 } from '../../src/levels/level00h/solution';
+import {
+  FLAG as FLAGI,
+  SHORTCUTS_THAT_FAIL as SHORTI,
+  SOLUTION as SOLI,
+} from '../../src/levels/level00i/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -272,6 +277,32 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00h-making-files');
     const out = await step(h, SHORTH[0]!);
     expect(out.stdout).not.toContain(FLAGH);
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('lesson 9 (text processing): sort | uniq collapses the log and unlocks the flag', async () => {
+    const h = await tutorialAt('00i-text-processing');
+    let captured = false;
+    for (const cmd of SOLI) {
+      const out = await step(h, cmd);
+      // The console reveals the flag when the duplicates are collapsed with uniq.
+      if (cmd.includes('uniq')) expect(out.stdout).toContain(FLAGI);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 9 coaches: wc points to the pipeline, a bare sort points at uniq', async () => {
+    const h = await tutorialAt('00i-text-processing');
+    expect((await step(h, 'wc -l sessions.log')).stdout).toContain('uniq');
+    expect((await step(h, 'sort sessions.log')).stdout).toContain('uniq');
+  });
+
+  it('lesson 9 cannot be shortcut: cat floods but shows no flag', async () => {
+    const h = await tutorialAt('00i-text-processing');
+    const out = await step(h, SHORTI[0]!);
+    expect(out.stdout).not.toContain(FLAGI);
     expect(h.game.status().completed).toBe(false);
   });
 });
