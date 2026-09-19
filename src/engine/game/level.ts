@@ -37,8 +37,10 @@ export interface Level {
   hosts?: readonly HostDefinition[];
   /** Network-wide configuration: DNS, latency (Phase 2+). */
   network?: NetworkDefinition;
-  /** SHA-256 hex digest of the plaintext flag (never the flag itself). */
-  flagHash: string;
+  /** SHA-256 hex digest of the plaintext flag (never the flag itself). Omitted for practice. */
+  flagHash?: string;
+  /** A free-practice sandbox: always unlocked, no flag, excluded from progression and scoring. */
+  practice?: boolean;
   hints: readonly Localized[];
   /** Reference completion time in seconds, for the speed bonus. */
   parTimeSec: number;

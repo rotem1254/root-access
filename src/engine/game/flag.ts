@@ -20,11 +20,11 @@ export function isFlagFormat(candidate: string): boolean {
   return FLAG_PATTERN.test(candidate);
 }
 
-/** Compares a submitted flag against the stored hash (case-sensitive). */
-export function checkFlag(candidate: string, flagHash: string): FlagCheck {
+/** Compares a submitted flag against the stored hash (case-sensitive). No hash never matches. */
+export function checkFlag(candidate: string, flagHash: string | undefined): FlagCheck {
   const normalized = normalizeFlag(candidate);
   if (!isFlagFormat(normalized)) return 'invalid-format';
-  return sha256Hex(normalized) === flagHash ? 'match' : 'incorrect';
+  return flagHash !== undefined && sha256Hex(normalized) === flagHash ? 'match' : 'incorrect';
 }
 
 export function hashFlag(flag: string): string {

@@ -19,6 +19,7 @@ import { level12 } from './level12';
 import { level13 } from './level13';
 import { level14 } from './level14';
 import { level15 } from './level15';
+import { sandbox } from './sandbox';
 import { HE } from './translations.he';
 
 const english = (value: Localized): string => (typeof value === 'string' ? value : value.en);
@@ -63,4 +64,5 @@ export const LEVELS: LevelCatalog = [
   level13,
   level14,
   level15,
+  sandbox,
 ].map(withHebrew);

@@ -34,7 +34,7 @@ export interface UIStrings {
     languageLabel: string;
     togglePanel: string;
   };
-  buttons: { skipBoot: string; menu: string; hint: string; language: string };
+  buttons: { skipBoot: string; menu: string; hint: string; language: string; practice: string };
   boot: { pressToSkip: string; ready: string };
   capture: { title: string; score: string; next: string };
   guide: { searchPlaceholder: string; noMatches: string };
@@ -80,7 +80,13 @@ const en: UIStrings = {
     languageLabel: 'Language',
     togglePanel: 'Toggle the mission panel',
   },
-  buttons: { skipBoot: 'Skip', menu: 'Menu', hint: 'Hint', language: 'עברית' },
+  buttons: {
+    skipBoot: 'Skip',
+    menu: 'Menu',
+    hint: 'Hint',
+    language: 'עברית',
+    practice: 'Practice',
+  },
   boot: { pressToSkip: 'press any key to skip', ready: 'Ready.' },
   capture: { title: 'FLAG CAPTURED', score: 'Score', next: 'Next level unlocked' },
   guide: { searchPlaceholder: 'Search commands…', noMatches: 'No commands match your search.' },
@@ -134,7 +140,7 @@ const he: UIStrings = {
     languageLabel: 'שפה',
     togglePanel: 'הצג או הסתר את לוח המשימה',
   },
-  buttons: { skipBoot: 'דלג', menu: 'תפריט', hint: 'רמז', language: 'English' },
+  buttons: { skipBoot: 'דלג', menu: 'תפריט', hint: 'רמז', language: 'English', practice: 'תרגול' },
   boot: { pressToSkip: 'הקישו מקש כלשהו כדי לדלג', ready: 'מוכן.' },
   capture: { title: 'הדגל נלכד', score: 'ניקוד', next: 'השלב הבא נפתח' },
   guide: { searchPlaceholder: 'חיפוש פקודות…', noMatches: 'אין פקודות שמתאימות לחיפוש.' },

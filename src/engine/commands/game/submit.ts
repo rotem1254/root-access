@@ -28,6 +28,11 @@ export const submit = defineCommand({
       case 'invalid-format':
         ctx.stderr('submit: that does not look like a flag. Flags look like FLAG{...}.\n');
         return 1;
+      case 'practice':
+        ctx.stdout(
+          'This is the practice sandbox — there is no flag to submit here. Explore freely, and type `levels` to return to the missions.\n',
+        );
+        return 0;
       case 'already-captured':
         ctx.stdout('You have already captured this level. Type `levels` to see what is next.\n');
         return 0;

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { renderSummary } from '../../../src/engine/commands/game/summary';
 import type { RunSummary } from '../../../src/engine/game/api';
+import { isStub } from '../../../src/engine/game/level';
 import { LEVELS } from '../../../src/levels';
 import { SOLUTION as SOLUTION1 } from '../../../src/levels/level01/solution';
 import { createGame, storageStartingAt } from '../../helpers/game';
+
+const MISSIONS = LEVELS.filter((e) => !isStub(e) && !e.practice);
+const LAST_MISSION = MISSIONS[MISSIONS.length - 1]!;
 
 const ROW = {
   id: 'x',
@@ -82,9 +86,9 @@ describe('game.runSummary()', () => {
       storage: await storageStartingAt(LEVELS, '01-hidden-in-plain-sight'),
     });
     const before = h.game.runSummary();
-    expect(before.levelsTotal).toBe(LEVELS.length);
+    expect(before.levelsTotal).toBe(MISSIONS.length);
     expect(before.complete).toBe(false);
-    expect(before.maxScore).toBe(LEVELS.length * 150);
+    expect(before.maxScore).toBe(MISSIONS.length * 150);
 
     for (const line of SOLUTION1) await h.run(line);
     const after = h.game.runSummary();
@@ -100,25 +104,25 @@ describe('game.runSummary()', () => {
     const out = await h.run('summary');
     expect(out.stdout).toContain('RUN SUMMARY');
     expect(out.stdout).toContain('Hidden in Plain Sight');
-    expect(out.stdout).toContain(`Levels captured 0/${LEVELS.length}`);
+    expect(out.stdout).toContain(`Levels captured 0/${MISSIONS.length}`);
   });
 
   it('emits run-complete and reports complete once the last level is captured', async () => {
     // Start on the final level with every earlier one already captured.
-    const lastId = LEVELS[LEVELS.length - 1]?.id ?? '';
+    const lastId = LAST_MISSION.id;
     const h = await createGame(LEVELS, { storage: await storageStartingAt(LEVELS, lastId) });
     expect(h.game.runSummary().complete).toBe(false);
-    expect(h.game.runSummary().levelsCompleted).toBe(LEVELS.length - 1);
+    expect(h.game.runSummary().levelsCompleted).toBe(MISSIONS.length - 1);
 
     const { FLAG } = await import('../../../src/levels/level15/solution');
     await h.run(`submit ${FLAG}`);
     const summary = h.game.runSummary();
     expect(summary.complete).toBe(true);
-    expect(summary.levelsCompleted).toBe(LEVELS.length);
+    expect(summary.levelsCompleted).toBe(MISSIONS.length);
     expect(h.events).toContainEqual({ type: 'run-complete', totalScore: summary.totalScore });
     // The scoring screen now shows the finished run.
     expect((await h.run('summary')).stdout).toContain(
-      `Levels captured ${LEVELS.length}/${LEVELS.length}`,
+      `Levels captured ${MISSIONS.length}/${MISSIONS.length}`,
     );
   });
 });

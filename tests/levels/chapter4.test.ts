@@ -57,13 +57,14 @@ const playable = (id: string): Level => {
 
 describe('Chapter 4 & 5 catalog', () => {
   it('completes the catalog with the web and finale levels', () => {
-    expect(LEVELS.map((entry) => entry.id).slice(-4)).toEqual([
+    const missions = LEVELS.filter((e) => !isStub(e) && !e.practice);
+    expect(missions.map((entry) => entry.id).slice(-4)).toEqual([
       '12-robots-and-secrets',
       '13-broken-access',
       '14-injection',
       '15-the-last-door',
     ]);
-    expect(LEVELS).toHaveLength(20);
+    expect(LEVELS.some((e) => !isStub(e) && e.practice)).toBe(true);
     expect(LEVELS.some(isStub)).toBe(false);
     expect(playable('15-the-last-door').chapter).toBe(5);
     for (const id of [

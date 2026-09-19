@@ -116,6 +116,8 @@ async function main(): Promise<void> {
     skip.textContent = ui.a11y.skipToTerminal;
     help.setAttribute('aria-label', ui.welcome.reopen);
     help.title = ui.welcome.reopen;
+    practice.textContent = `🧪 ${ui.buttons.practice}`;
+    practice.setAttribute('aria-label', ui.buttons.practice);
   };
 
   // Skip link: first Tab stop, jumps straight to the terminal.
@@ -145,8 +147,15 @@ async function main(): Promise<void> {
     void openWelcome(game).then(() => term.focus());
   });
 
+  // Jump into the free practice sandbox at any time.
+  const practice = el('button', { class: 'practice-toggle', type: 'button' });
+  on(practice, 'click', () => {
+    game.goToLevel('sandbox');
+    term.focus();
+  });
+
   panels.setLocaleChangeHandler(applyLocale);
-  app.append(skip, terminalPane, panels.root, toggle, language, help);
+  app.append(skip, terminalPane, panels.root, toggle, language, help, practice);
   if (isTouchDevice())
     terminalPane.append(createTouchKeys(terminal, strings(game.locale).a11y.touchKeysLabel));
   applyLocale();

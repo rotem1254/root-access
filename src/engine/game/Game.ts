@@ -84,7 +84,9 @@ export class Game {
 
   /** Builds a game and loads the current (or first) level. */
   static async create(options: GameOptions): Promise<Game> {
-    const firstPlayable = options.catalog.find((entry): entry is Level => !isStub(entry));
+    const firstPlayable = options.catalog.find(
+      (entry): entry is Level => !isStub(entry) && !entry.practice,
+    );
     if (!firstPlayable) throw new Error('catalog has no playable levels');
     const storage = options.storage ?? new MemoryStorage();
     const loaded = await storage.load();
@@ -348,6 +350,7 @@ export class Game {
 
   async submitFlag(candidate: string): Promise<SubmitResult> {
     const level = this.currentLevel;
+    if (level.practice || level.flagHash === undefined) return { status: 'practice' };
     if (this.isCompleted(level.id)) return { status: 'already-captured' };
     const result = checkFlag(candidate, level.flagHash);
     if (result === 'invalid-format') return { status: 'invalid-format' };
@@ -432,22 +435,27 @@ export class Game {
   private levelStateOf(entry: LevelEntry, index: number): LevelState {
     if (isStub(entry)) return 'coming-soon';
     if (entry.id === this.currentLevel.id) return 'current';
+    if (!isStub(entry) && entry.practice) return 'unlocked';
     if (this.isCompleted(entry.id)) return 'completed';
     return this.isUnlocked(index) ? 'unlocked' : 'locked';
   }
 
-  /** A level is unlocked when every playable level before it is completed. */
+  /** A level is unlocked when every playable level before it is completed; practice is always open. */
   private isUnlocked(index: number): boolean {
+    const here = this.catalog[index];
+    if (here && !isStub(here) && here.practice) return true;
     for (let i = 0; i < index; i++) {
       const entry = this.catalog[i];
-      if (entry && !isStub(entry) && !this.isCompleted(entry.id)) return false;
+      if (entry && !isStub(entry) && !entry.practice && !this.isCompleted(entry.id)) return false;
     }
     return true;
   }
 
   /** The end-of-run scoring screen: one row per playable level, plus totals. */
   runSummary(): RunSummary {
-    const playable = this.catalog.filter((entry): entry is Level => !isStub(entry));
+    const playable = this.catalog.filter(
+      (entry): entry is Level => !isStub(entry) && !entry.practice,
+    );
     const rows: RunRow[] = playable.map((level, index) => {
       const progress = this.save.progress[level.id];
       const completed = progress?.completedAt !== undefined;
@@ -491,7 +499,7 @@ export class Game {
     const start = this.catalog.findIndex((entry) => entry.id === id);
     for (let i = start + 1; i < this.catalog.length; i++) {
       const entry = this.catalog[i];
-      if (entry && !isStub(entry)) return entry.id;
+      if (entry && !isStub(entry) && !entry.practice) return entry.id;
     }
     return null;
   }
@@ -506,6 +514,24 @@ export class Game {
     if (!this.isUnlocked(index)) return 'locked';
     this.pending = { kind: 'start', id: entry.id };
     return 'ok';
+  }
+
+  /**
+   * Switches level from the UI (e.g. the Practice button). Applies immediately when the shell is
+   * idle at a prompt; if a command is mid-flight it defers to afterLine like the `levels` command.
+   */
+  goToLevel(idOrNumber: string): StartLevelResult {
+    const result = this.requestStartLevel(idOrNumber);
+    if (result === 'ok' && this.shellInstance.inputRequest.kind === 'prompt') {
+      const pending = this.pending;
+      this.pending = null;
+      if (pending?.kind === 'start') {
+        this.loadLevel(pending.id);
+        this.resume();
+        void this.persist();
+      }
+    }
+    return result;
   }
 
   /** Marks the boot animation as seen (persisted with the next save). */

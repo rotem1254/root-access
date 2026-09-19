@@ -45,7 +45,7 @@ async function gameAt(id: string): Promise<GameHarness> {
 
 describe('Chapter 1 catalog', () => {
   it('has three playable Chapter 1 levels, and every playable level is consistent', () => {
-    const playable = LEVELS.filter((entry): entry is Level => !isStub(entry));
+    const playable = LEVELS.filter((entry): entry is Level => !isStub(entry) && !entry.practice);
     expect(playable.filter((level) => level.chapter === 1).map((level) => level.id)).toEqual([
       '01-hidden-in-plain-sight',
       '02-needle-in-the-logs',

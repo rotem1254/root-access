@@ -22,6 +22,7 @@ export type SubmitResult =
   | { status: 'already-captured' }
   | { status: 'invalid-format' }
   | { status: 'incorrect' }
+  | { status: 'practice' }
   | { status: 'no-level' };
 
 export type HintResult =

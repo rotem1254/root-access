@@ -170,8 +170,10 @@ export class Panels {
       ]);
     const minutes = Math.floor(status.elapsedMs / 60000);
     const seconds = Math.floor((status.elapsedMs % 60000) / 1000);
+    // Practice has no place in the progression, so show a flask instead of a misleading "N/N".
+    const levelValue = this.game.level.practice ? '🧪' : `${status.number}/${status.levelsTotal}`;
     this.hud.append(
-      stat(this.ui.hud.level, `${status.number}/${status.levelsTotal}`),
+      stat(this.ui.hud.level, levelValue),
       stat(this.ui.hud.time, `${minutes}:${String(seconds).padStart(2, '0')}`),
       stat(this.ui.hud.hints, `${status.hintsUsed}/${status.hintsTotal}`),
       stat(this.ui.hud.score, String(status.totalScore)),
