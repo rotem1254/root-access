@@ -79,6 +79,7 @@ import {
   PASSWORD as PWF,
   SHORTCUTS_THAT_FAIL as SHORTF,
 } from '../../src/levels/level00f/solution';
+import { FLAG as FLAGG, SOLUTION as SOLG } from '../../src/levels/level00g/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -209,6 +210,35 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00f-becoming-root');
     const denied = await step(h, SHORTF[0]!);
     expect(denied.stderr).toContain('Permission denied');
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('lesson 7 (find): locate a buried file by name and read it', async () => {
+    const h = await tutorialAt('00g-finding-files');
+    let captured = false;
+    for (const cmd of SOLG) {
+      const out = await step(h, cmd);
+      if (cmd.startsWith('find')) expect(out.stdout).toContain('archive/2023/backups/vault.bak');
+      if (cmd.startsWith('cat')) expect(out.stdout).toContain(FLAGG);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 7 coaches: hunting by hand steers to find, then to cat', async () => {
+    const h = await tutorialAt('00g-finding-files');
+    expect((await step(h, 'ls')).stdout).toContain('find . -name vault.bak');
+    expect((await step(h, 'find . -name vault.bak')).stdout).toContain(
+      'cat ./archive/2023/backups/vault.bak',
+    );
+  });
+
+  it('lesson 7: the target is not sitting in the home directory', async () => {
+    const h = await tutorialAt('00g-finding-files');
+    // A naive cat in the home dir fails — the file really is buried.
+    const out = await step(h, 'cat vault.bak');
+    expect(out.stderr).toContain('No such file or directory');
     expect(h.game.status().completed).toBe(false);
   });
 });

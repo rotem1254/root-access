@@ -1,0 +1,22 @@
+You found a file without knowing where it was — that is what `find` is for.
+
+`find` walks a whole directory tree and prints every path that matches a test:
+
+    find . -name vault.bak         by exact name, here and below
+    find . -name "*.bak"           by pattern (quote it so the shell keeps it)
+    find / -name flag.txt 2>/dev/null   search everything, hide "denied" noise
+
+On a real system this is how you locate config files, logs, backups — and, in
+security work, interesting targets. The classic recon move builds on the last
+lesson:
+
+    find / -perm -4000 -type f 2>/dev/null
+
+That lists every setuid program (runs as its owner, often root) — the first
+place an attacker looks for a way up.
+
+Your flag:
+
+    FLAG{f0und_1t_w1th_f1nd}
+
+Submit it:  submit FLAG{f0und_1t_w1th_f1nd}
