@@ -69,3 +69,83 @@ describe('Chapter 0 — the tutorial', () => {
     expect(h.game.status().completed).toBe(false);
   });
 });
+
+import { FLAG as FLAGB, SOLUTION as SOLB } from '../../src/levels/level00b/solution';
+import { FLAG as FLAGC, SOLUTION as SOLC } from '../../src/levels/level00c/solution';
+import { FLAG as FLAGD, SOLUTION as SOLD } from '../../src/levels/level00d/solution';
+import { storageStartingAt } from '../helpers/game';
+
+async function tutorialAt(id: string): Promise<GameHarness> {
+  const h = await createGame(LEVELS, { storage: await storageStartingAt(LEVELS, id) });
+  expect(h.game.level.id).toBe(id);
+  return h;
+}
+
+describe('Chapter 0 — the extra guided lessons', () => {
+  it('are all chapter 0 and come right after the first lesson', () => {
+    const ids = LEVELS.slice(0, 4).map((l) => l.id);
+    expect(ids).toEqual(['00-first-lesson', '00b-moving-around', '00c-finding-text', '00d-pipes']);
+    for (const l of LEVELS.slice(0, 4)) expect((l as Level).chapter).toBe(0);
+  });
+
+  it('never store their flags as plaintext', () => {
+    const serialized = JSON.stringify(
+      LEVELS.slice(1, 4).map((l) => ({ ...(l as Level), onCommand: undefined })),
+    );
+    expect(serialized).not.toMatch(/FLAG\{[A-Za-z0-9_]+\}/);
+  });
+
+  it('lesson 2 (cd): enter the folder and read the file', async () => {
+    const h = await tutorialAt('00b-moving-around');
+    let captured = false;
+    for (const cmd of SOLB) {
+      const out = await step(h, cmd);
+      if (cmd === 'cd projects') expect(h.game.shell.session.env.cwd).toBe('/home/guest/projects');
+      if (cmd === 'cat secret.txt') expect(out.stdout).toContain(FLAGB);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 2 coaches: ls at home points into the folder, ls inside points at the file', async () => {
+    const h = await tutorialAt('00b-moving-around');
+    expect((await step(h, 'ls')).stdout).toContain('cd projects');
+    await step(h, 'cd projects');
+    expect((await step(h, 'ls')).stdout).toContain('cat secret.txt');
+  });
+
+  it('lesson 3 (grep): search instead of reading everything', async () => {
+    const h = await tutorialAt('00c-finding-text');
+    let captured = false;
+    for (const cmd of SOLC) {
+      const out = await step(h, cmd);
+      if (cmd.startsWith('grep')) expect(out.stdout).toContain(FLAGC);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+  });
+
+  it('lesson 3 coaches toward grep after a long cat', async () => {
+    const h = await tutorialAt('00c-finding-text');
+    expect((await step(h, 'cat logbook.txt')).stdout).toContain('grep token logbook.txt');
+  });
+
+  it('lesson 4 (pipes): ls | grep finds the key file', async () => {
+    const h = await tutorialAt('00d-pipes');
+    let captured = false;
+    for (const cmd of SOLD) {
+      const out = await step(h, cmd);
+      if (cmd === 'ls | grep key') expect(out.stdout).toContain('keycard.txt');
+      if (cmd === 'cat keycard.txt') expect(out.stdout).toContain(FLAGD);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+  });
+
+  it('lesson 4 coaches: plain ls suggests a pipe, the pipe points at the file', async () => {
+    const h = await tutorialAt('00d-pipes');
+    expect((await step(h, 'ls')).stdout).toContain('ls | grep key');
+    expect((await step(h, 'ls | grep key')).stdout).toContain('cat keycard.txt');
+  });
+});

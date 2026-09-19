@@ -1,0 +1,11 @@
+Nicely done — you filtered a long list by piping it through grep.
+
+A pipe, written | , takes the output of the command on its left and feeds it as
+the input of the command on its right. `ls | grep key` means: list everything,
+then keep only the lines that contain "key". You can chain as many as you like.
+
+Your flag:
+
+    FLAG{p1p3_1t_thr0ugh}
+
+Submit it:  submit FLAG{p1p3_1t_thr0ugh}
