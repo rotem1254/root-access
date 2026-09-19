@@ -11,7 +11,27 @@ import { el, isTouchDevice, on } from './ui/dom';
 import { Panels } from './ui/Panels';
 import { Terminal } from './ui/Terminal';
 import { createTouchKeys } from './ui/TouchKeys';
+import { openWelcome } from './ui/Welcome';
 import { KeyValueStorage } from './engine/game';
+
+const WELCOME_KEY = 'root-access:welcome-seen';
+
+/** Whether the how-to-play overlay has been dismissed before (a per-viewer UI convenience). */
+function welcomeSeen(): boolean {
+  try {
+    return localStorage.getItem(WELCOME_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markWelcomeSeen(): void {
+  try {
+    localStorage.setItem(WELCOME_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+}
 
 /** localStorage-backed save, guarded so a private window or blocked storage still runs. */
 function makeStorage(): KeyValueStorage {
@@ -92,6 +112,8 @@ async function main(): Promise<void> {
     language.textContent = ui.buttons.language;
     language.setAttribute('aria-label', ui.a11y.languageLabel);
     skip.textContent = ui.a11y.skipToTerminal;
+    help.setAttribute('aria-label', ui.welcome.reopen);
+    help.title = ui.welcome.reopen;
   };
 
   // Skip link: first Tab stop, jumps straight to the terminal.
@@ -115,8 +137,14 @@ async function main(): Promise<void> {
     term.focus();
   });
 
+  // A small "?" button reopens the how-to-play overlay at any time.
+  const help = el('button', { class: 'help-toggle', type: 'button', text: '?' });
+  on(help, 'click', () => {
+    void openWelcome(game).then(() => term.focus());
+  });
+
   panels.setLocaleChangeHandler(applyLocale);
-  app.append(skip, terminalPane, panels.root, toggle, language);
+  app.append(skip, terminalPane, panels.root, toggle, language, help);
   if (isTouchDevice())
     terminalPane.append(createTouchKeys(terminal, strings(game.locale).a11y.touchKeysLabel));
   applyLocale();
@@ -141,6 +169,12 @@ async function main(): Promise<void> {
       terminal.onInputRequest(game.shell.inputRequest);
     }
   });
+
+  // First visit: explain the game before the boot sequence. Reopen any time with the "?" button.
+  if (!welcomeSeen()) {
+    await openWelcome(game);
+    markWelcomeSeen();
+  }
 
   await runBootSequence(terminal, { full: !game.bootSeen });
   game.markBootSeen();

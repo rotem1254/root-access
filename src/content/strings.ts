@@ -37,6 +37,17 @@ export interface UIStrings {
   buttons: { skipBoot: string; menu: string; hint: string; language: string };
   boot: { pressToSkip: string; ready: string };
   capture: { title: string; score: string; next: string };
+  welcome: {
+    tagline: string;
+    whatTitle: string;
+    whatBody: string;
+    howTitle: string;
+    steps: readonly string[];
+    lessonsNote: string;
+    start: string;
+    reopen: string;
+    dialogLabel: string;
+  };
 }
 
 const en: UIStrings = {
@@ -71,6 +82,25 @@ const en: UIStrings = {
   buttons: { skipBoot: 'Skip', menu: 'Menu', hint: 'Hint', language: 'עברית' },
   boot: { pressToSkip: 'press any key to skip', ready: 'Ready.' },
   capture: { title: 'FLAG CAPTURED', score: 'Score', next: 'Next level unlocked' },
+  welcome: {
+    tagline: 'Learn real hacking by playing in a safe, simulated Linux terminal.',
+    whatTitle: 'What is this?',
+    whatBody:
+      'A puzzle game where you solve challenges by typing real Linux commands. ' +
+      'Nothing here is connected to the internet and nothing can break — it is all a simulation, ' +
+      'so experiment freely.',
+    howTitle: 'How to play',
+    steps: [
+      'Type a command in the terminal on the left and press Enter. Try `ls` to start.',
+      'The panel on the right shows your Mission. Stuck? Open the Hints tab for a nudge.',
+      'Each level hides a flag that looks like FLAG{...}. Hand it in with `submit FLAG{...}` to win.',
+    ],
+    lessonsNote:
+      'Never used a terminal? Perfect. The first four lessons teach you everything from zero — one command at a time.',
+    start: 'Start playing',
+    reopen: 'How to play',
+    dialogLabel: 'Welcome and how to play',
+  },
 };
 
 const he: UIStrings = {
@@ -105,6 +135,24 @@ const he: UIStrings = {
   buttons: { skipBoot: 'דלג', menu: 'תפריט', hint: 'רמז', language: 'English' },
   boot: { pressToSkip: 'הקישו מקש כלשהו כדי לדלג', ready: 'מוכן.' },
   capture: { title: 'הדגל נלכד', score: 'ניקוד', next: 'השלב הבא נפתח' },
+  welcome: {
+    tagline: 'ללמוד האקינג אמיתי דרך משחק, בטרמינל לינוקס מדומה ובטוח.',
+    whatTitle: 'מה זה?',
+    whatBody:
+      'משחק חשיבה שבו פותרים אתגרים על ידי הקלדת פקודות לינוקס אמיתיות. שום דבר כאן לא מחובר ' +
+      'לאינטרנט ואי אפשר לשבור כלום — הכול סימולציה, אז תתנסו בחופשיות.',
+    howTitle: 'איך משחקים',
+    steps: [
+      'הקלידו פקודה בטרמינל שמימין ולחצו Enter. התחילו עם `ls`.',
+      'הלוח שמשמאל מציג את המשימה שלכם. תקועים? פתחו את לשונית הרמזים.',
+      'בכל שלב מוסתר דגל שנראה כמו FLAG{...}. הגישו אותו עם `submit FLAG{...}` כדי לנצח.',
+    ],
+    lessonsNote:
+      'לא נגעתם בטרמינל מעולם? מצוין. ארבעת השיעורים הראשונים מלמדים אתכם הכול מאפס — פקודה אחת בכל פעם.',
+    start: 'להתחיל לשחק',
+    reopen: 'איך משחקים',
+    dialogLabel: 'ברוכים הבאים ואיך משחקים',
+  },
 };
 
 export function strings(locale: Locale): UIStrings {
