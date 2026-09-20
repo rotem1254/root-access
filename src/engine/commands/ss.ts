@@ -1,3 +1,4 @@
+import { programName } from '../network/services';
 import { parseOptions } from './args';
 import { defineCommand } from './define';
 
@@ -39,7 +40,7 @@ export const ss = defineCommand({
     for (const service of ports) {
       const local = `0.0.0.0:${service.port}`.padEnd(27);
       const proc = programs
-        ? `     users:(("${service.name ?? 'sshd'}",pid=${1000 + service.port},fd=3))`
+        ? `     users:(("${programName(service.port, service.name)}",pid=${1000 + service.port},fd=3))`
         : '';
       ctx.stdout(`LISTEN     0          128            ${local}0.0.0.0:*${proc}\n`);
     }

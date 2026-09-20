@@ -36,6 +36,32 @@ export function serviceName(port: number, override?: string): string {
   return override ?? WELL_KNOWN_PORTS[port] ?? 'unknown';
 }
 
+/** The daemon that typically owns a well-known port, as `netstat -p` / `ss -p` would name it. */
+export const PORT_PROGRAMS: Readonly<Record<number, string>> = {
+  22: 'sshd',
+  21: 'vsftpd',
+  25: 'master',
+  53: 'named',
+  80: 'nginx',
+  110: 'dovecot',
+  143: 'dovecot',
+  443: 'nginx',
+  445: 'smbd',
+  3000: 'node',
+  3306: 'mysqld',
+  5432: 'postgres',
+  6379: 'redis-server',
+  8000: 'python3',
+  8080: 'nginx',
+  8443: 'nginx',
+  9200: 'java',
+};
+
+/** The program name for a listening port: an explicit override, else the well-known daemon. */
+export function programName(port: number, override?: string): string {
+  return override ?? PORT_PROGRAMS[port] ?? serviceName(port);
+}
+
 /** A default connect banner for services that send one, used by nc and nmap -sV. */
 export function defaultBanner(
   port: number,

@@ -333,7 +333,13 @@ function runSelect(database: SqlDatabase, select: Select): SqlResult {
     rows.push(
       columns.map((column) => {
         if (column in row) return row[column] ?? null;
-        // A literal in the column list (as a UNION payload uses) selects itself.
+        // A literal in the column list (as a UNION payload uses) selects itself. Recognise the SQL
+        // keyword literals so the classic `UNION SELECT NULL,NULL,...` column-count probe blanks out
+        // instead of printing the word "NULL".
+        const upper = column.toUpperCase();
+        if (upper === 'NULL') return null;
+        if (upper === 'TRUE') return 1;
+        if (upper === 'FALSE') return 0;
         const asNumber = Number(column);
         return Number.isNaN(asNumber) ? column : asNumber;
       }),

@@ -114,6 +114,30 @@ describe('openssl extra options', () => {
     );
   });
 
+  it('honours -iter (PBKDF2 iteration count) and round-trips with the same count', async () => {
+    const t = h();
+    await t.run('openssl enc -aes-256-cbc -iter 2048 -in a.txt -out it.enc -k pw');
+    // -iter implies PBKDF2, so a matching -iter (or -pbkdf2 with the same count) decrypts it.
+    expect((await t.run('openssl enc -d -aes-256-cbc -iter 2048 -in it.enc -k pw')).stdout).toBe(
+      'alpha\n',
+    );
+    // The count really is used: a different -iter derives a different key (checked deterministically,
+    // since "wrong key fails to decrypt" is only probabilistically true with CBC padding).
+    const salt = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(pbkdf2Key('pw', salt, 32, 16, 2048).key).not.toEqual(
+      pbkdf2Key('pw', salt, 32, 16, 1024).key,
+    );
+    // A bad iteration count is rejected, not silently ignored.
+    expect((await t.run('openssl enc -aes-256-cbc -iter zero -in a.txt -k pw')).status).toBe(1);
+  });
+
+  it('rejects -nosalt rather than silently ignoring it', async () => {
+    const t = h();
+    const out = await t.run('openssl enc -aes-256-cbc -nosalt -in a.txt -k pw');
+    expect(out.status).toBe(1);
+    expect(out.stderr).toContain('-nosalt is not supported');
+  });
+
   it('rejects bad ciphers, digests, options and files', async () => {
     const t = h();
     expect((await t.run('openssl enc -bogus-cipher -in a.txt -k pw')).status).toBe(1);

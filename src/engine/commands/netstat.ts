@@ -1,3 +1,4 @@
+import { programName } from '../network/services';
 import type { ServiceSpec } from '../network/types';
 import { parseOptions } from './args';
 import { defineCommand } from './define';
@@ -23,7 +24,7 @@ export const netstat = defineCommand({
     ['-a, --all', 'display all sockets'],
   ],
   details:
-    'Run on a host you have landed on, netstat -tlnp tells you what that host\nserves — including services bound only to localhost that a remote scan (nmap)\nwould never see.',
+    'Run on a host you have landed on, netstat -tlnp tells you what that host\nserves, and which program owns each port — a local, authoritative view that\ncomplements what a remote scan (nmap) sees from the outside.',
   examples: [['netstat -tlnp', 'list listening TCP services on this host']],
   seeAlso: ['ss(8)', 'nmap(1)', 'nc(1)'],
   run: async (ctx) => {
@@ -47,7 +48,9 @@ export const netstat = defineCommand({
     );
     for (const service of listeningRows(ctx)) {
       const local = `0.0.0.0:${service.port}`.padEnd(23);
-      const prog = programs ? ` ${1000 + service.port}/${service.name ?? 'sshd'}` : '';
+      const prog = programs
+        ? ` ${1000 + service.port}/${programName(service.port, service.name)}`
+        : '';
       ctx.stdout(
         `tcp        0      0 ${local} 0.0.0.0:*               LISTEN     ${prog}\n`.replace(
           /\s+$/,

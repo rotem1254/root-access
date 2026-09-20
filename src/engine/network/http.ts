@@ -78,8 +78,16 @@ function decodeBasicAuth(header: string | undefined): { user: string; password: 
 }
 
 /** Resolves a request against a site's routes, honouring a trailing-slash and basic auth. */
+/** Lower-cases header names, because HTTP header fields are case-insensitive (RFC 9110). */
+function lowerKeys(headers: Readonly<Record<string, string>>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) out[key.toLowerCase()] = value;
+  return out;
+}
+
 export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
   const server = site.server ?? 'nginx/1.24.0 (Ubuntu)';
+  const requestHeaders = lowerKeys(request.headers);
   const baseHeaders = (): Record<string, string> => ({
     Server: server,
     'Content-Type': 'text/html',
@@ -99,7 +107,7 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
     };
   }
   if (route.auth) {
-    const creds = decodeBasicAuth(request.headers.authorization ?? request.headers.Authorization);
+    const creds = decodeBasicAuth(requestHeaders.authorization);
     if (creds?.user !== route.auth.user || creds.password !== route.auth.password) {
       return {
         status: 401,
@@ -116,7 +124,7 @@ export function serveHttp(site: HttpSite, request: HttpRequest): HttpResponse {
       method: request.method,
       path,
       query,
-      headers: request.headers,
+      headers: requestHeaders,
       body: request.body ?? '',
     };
     const result = route.handler(info);

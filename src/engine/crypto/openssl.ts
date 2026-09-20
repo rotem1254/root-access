@@ -61,6 +61,8 @@ export interface EncOptions {
   keyLength?: number;
   digest?: EncDigest;
   pbkdf2?: boolean;
+  /** PBKDF2 iteration count (openssl's -iter); defaults to 10000. */
+  iterations?: number;
   /** Fixed salt, so level content is byte-stable across builds. */
   salt?: Uint8Array;
 }
@@ -72,7 +74,7 @@ function deriveFor(
 ): { key: Uint8Array; iv: Uint8Array } {
   const keyLength = options.keyLength ?? 32;
   return options.pbkdf2
-    ? pbkdf2Key(password, salt, keyLength, 16)
+    ? pbkdf2Key(password, salt, keyLength, 16, options.iterations ?? 10000)
     : evpBytesToKey(password, salt, keyLength, 16, options.digest ?? 'sha256');
 }
 

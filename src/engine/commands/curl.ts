@@ -23,6 +23,14 @@ function parseUrl(raw: string): ParsedUrl | null {
   };
 }
 
+/** Resolves a redirect's Location against the current URL (absolute, root-relative or relative). */
+function resolveLocation(location: string, base: ParsedUrl): ParsedUrl | null {
+  if (/^[a-z]+:\/\//i.test(location)) return parseUrl(location);
+  if (location.startsWith('/')) return { ...base, path: location };
+  const dir = base.path.slice(0, base.path.lastIndexOf('/') + 1) || '/';
+  return { ...base, path: dir + location };
+}
+
 export const curl = defineCommand({
   name: 'curl',
   kind: 'binary',
@@ -37,6 +45,7 @@ export const curl = defineCommand({
     ['-u, --user USER:PASS', 'server user and password for HTTP basic auth'],
     ['-o, --output FILE', 'write the body to FILE instead of stdout'],
     ['-L, --location', 'follow redirects'],
+    ['-A, --user-agent NAME', 'the User-Agent string to send'],
     ['-X, --request METHOD', 'the request method to use (GET, POST, ...)'],
     ['-d, --data DATA', 'send DATA as the request body; implies POST'],
     ['-H, --header LINE', "add a request header, e.g. -H 'X-Role: admin'"],
@@ -81,67 +90,98 @@ export const curl = defineCommand({
       ctx.stderr("curl: try 'curl --help' for more information\n");
       return 2;
     }
-    const url = parseUrl(rawUrl);
+    let url = parseUrl(rawUrl);
     if (!url) {
       ctx.stderr(`curl: (3) URL using bad/illegal format or missing URL\n`);
       return 3;
     }
-    const ip = ctx.network.resolve(url.host);
-    if (ip === undefined) {
-      ctx.stderr(`curl: (6) Could not resolve host: ${url.host}\n`);
-      return 6;
-    }
-    const target = ctx.network.machineByIp(ip);
-    const service = target ? ctx.network.serviceOn(target, url.port) : undefined;
-    if (!target || !ctx.network.canReach(ctx.machine, ip) || !service?.http) {
-      ctx.stderr(
-        `curl: (7) Failed to connect to ${url.host} port ${url.port} after 0 ms: Connection refused\n`,
-      );
-      return 7;
-    }
 
-    const headers: Record<string, string> = {
-      Host: url.host,
-      'User-Agent': 'curl/8.5.0',
-      Accept: '*/*',
-    };
+    // Headers that persist across redirects. Host is set per hop, inside the loop.
+    const userAgent = o.value('user-agent') ?? 'curl/8.5.0';
+    const extra: Record<string, string> = {};
     const user = o.value('user');
-    if (user !== undefined) headers.Authorization = `Basic ${base64Encode(user)}`;
+    if (user !== undefined) extra.Authorization = `Basic ${base64Encode(user)}`;
     const cookie = o.value('cookie');
-    if (cookie !== undefined) headers.Cookie = cookie;
-    // -d implies POST with a form content type, exactly like the real tool.
-    const data = o.value('data');
-    if (data !== undefined) headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    const method = o.value('request') ?? (data !== undefined ? 'POST' : 'GET');
+    if (cookie !== undefined) extra.Cookie = cookie;
     for (const header of o.values('header')) {
       const colon = header.indexOf(':');
-      if (colon > 0) headers[header.slice(0, colon).trim()] = header.slice(colon + 1).trim();
+      if (colon > 0) extra[header.slice(0, colon).trim()] = header.slice(colon + 1).trim();
     }
-    if (o.has('verbose')) {
-      ctx.stderr(
-        `*   Trying ${ip}:${url.port}...\n* Connected to ${url.host} (${ip}) port ${url.port}\n`,
-      );
-      ctx.stderr(
-        `> ${method} ${url.path} HTTP/1.1\n> Host: ${url.host}\n> User-Agent: curl/8.5.0\n>\n`,
-      );
-    }
-    const response = serveHttp(service.http, {
-      method,
-      path: url.path,
-      headers,
-      ...(data !== undefined ? { body: data } : {}),
-    });
+    // -d implies POST with a form content type, exactly like the real tool.
+    let data = o.value('data');
+    let method = o.value('request') ?? (data !== undefined ? 'POST' : 'GET');
 
-    if (o.has('verbose') || o.has('head')) {
-      const statusLine = `HTTP/1.1 ${response.status} ${statusText(response.status)}`;
-      ctx.stdout(o.has('head') ? `${statusLine}\r\n` : '');
-      if (o.has('verbose')) ctx.stderr(`< ${statusLine}\n`);
-      for (const [key, value] of Object.entries(response.headers)) {
-        if (o.has('head')) ctx.stdout(`${key}: ${value}\r\n`);
-        if (o.has('verbose')) ctx.stderr(`< ${key}: ${value}\n`);
+    const REDIRECTS = new Set([301, 302, 303, 307, 308]);
+    const MAX_REDIRECTS = 50;
+    let response: ReturnType<typeof serveHttp> | undefined;
+
+    for (let hop = 0; ; hop++) {
+      const ip = ctx.network.resolve(url.host);
+      if (ip === undefined) {
+        ctx.stderr(`curl: (6) Could not resolve host: ${url.host}\n`);
+        return 6;
       }
-      if (o.has('head')) ctx.stdout('\r\n');
-      if (o.has('head')) return 0;
+      const target = ctx.network.machineByIp(ip);
+      const service = target ? ctx.network.serviceOn(target, url.port) : undefined;
+      if (!target || !ctx.network.canReach(ctx.machine, ip) || !service?.http) {
+        ctx.stderr(
+          `curl: (7) Failed to connect to ${url.host} port ${url.port} after 0 ms: Connection refused\n`,
+        );
+        return 7;
+      }
+
+      const requestHeaders: Record<string, string> = {
+        Host: url.host,
+        'User-Agent': userAgent,
+        Accept: '*/*',
+        ...extra,
+        ...(data !== undefined ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+      };
+      if (o.has('verbose')) {
+        ctx.stderr(
+          `*   Trying ${ip}:${url.port}...\n* Connected to ${url.host} (${ip}) port ${url.port}\n`,
+        );
+        ctx.stderr(`> ${method} ${url.path} HTTP/1.1\n`);
+        for (const [key, value] of Object.entries(requestHeaders))
+          ctx.stderr(`> ${key}: ${value}\n`);
+        ctx.stderr('>\n');
+      }
+      response = serveHttp(service.http, {
+        method,
+        path: url.path,
+        headers: requestHeaders,
+        ...(data !== undefined ? { body: data } : {}),
+      });
+      if (o.has('verbose')) {
+        ctx.stderr(`< HTTP/1.1 ${response.status} ${statusText(response.status)}\n`);
+        for (const [key, value] of Object.entries(response.headers))
+          ctx.stderr(`< ${key}: ${value}\n`);
+        ctx.stderr('<\n');
+      }
+
+      const location = response.headers.Location;
+      if (!o.has('location') || !REDIRECTS.has(response.status) || location === undefined) break;
+      if (hop >= MAX_REDIRECTS) {
+        ctx.stderr(`curl: (47) Maximum (${MAX_REDIRECTS}) redirects followed\n`);
+        return 47;
+      }
+      const next = resolveLocation(location, url);
+      if (!next) break;
+      url = next;
+      // 301/302/303 drop to a bodyless GET; 307/308 preserve the method and body.
+      if (response.status !== 307 && response.status !== 308) {
+        method = 'GET';
+        data = undefined;
+      }
+    }
+
+    if (o.has('head')) {
+      const statusLine = `HTTP/1.1 ${response.status} ${statusText(response.status)}`;
+      ctx.stdout(`${statusLine}\r\n`);
+      for (const [key, value] of Object.entries(response.headers))
+        ctx.stdout(`${key}: ${value}\r\n`);
+      ctx.stdout('\r\n');
+      return 0;
     }
 
     const output = o.value('output');

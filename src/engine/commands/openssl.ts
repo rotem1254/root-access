@@ -24,6 +24,7 @@ interface EncArgs {
   base64: boolean;
   digest: 'md5' | 'sha1' | 'sha256';
   pbkdf2: boolean;
+  iterations: number | undefined;
 }
 
 /** openssl uses its own `-flag value` style, not getopt, so parse the argv directly. */
@@ -38,6 +39,7 @@ function parseEnc(args: readonly string[]): EncArgs | { error: string } {
     base64: false,
     digest: 'sha256',
     pbkdf2: false,
+    iterations: undefined,
   };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i] ?? '';
@@ -72,8 +74,22 @@ function parseEnc(args: readonly string[]): EncArgs | { error: string } {
       result.digest = value;
     } else if (arg === '-pbkdf2') {
       result.pbkdf2 = true;
-    } else if (arg === '-salt' || arg === '-nosalt' || arg === '-iter') {
-      if (arg === '-iter') next();
+    } else if (arg === '-iter') {
+      // -iter selects PBKDF2 with a given iteration count, exactly like real openssl.
+      const value = next();
+      const count = Number(value);
+      if (value === undefined || !Number.isInteger(count) || count < 1) {
+        return { error: `-iter: bad iteration count '${value ?? ''}'` };
+      }
+      result.iterations = count;
+      result.pbkdf2 = true;
+    } else if (arg === '-salt') {
+      // Salting is the default; accepting -salt is a no-op, as in real openssl.
+    } else if (arg === '-nosalt') {
+      return {
+        error:
+          '-nosalt is not supported in this simulation (it changes the container format); omit it to use the standard salted format',
+      };
     } else if (arg.startsWith('-')) {
       return { error: `Unknown option: ${arg}` };
     }
@@ -123,6 +139,7 @@ async function runEnc(ctx: CommandContext, args: readonly string[]): Promise<num
     keyLength,
     digest: parsed.digest,
     pbkdf2: parsed.pbkdf2,
+    ...(parsed.iterations !== undefined ? { iterations: parsed.iterations } : {}),
   };
   let output: ByteString;
   if (parsed.decrypt) {

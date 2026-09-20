@@ -28,10 +28,12 @@ const SITE: HttpSite = {
     },
     '/echo': {
       handler: (request) => ({
-        body: `method=${request.method} q=${request.query.q ?? ''} body=${request.body} role=${request.headers['X-Role'] ?? ''}\n`,
+        body: `method=${request.method} q=${request.query.q ?? ''} body=${request.body} role=${request.headers['x-role'] ?? ''} ua=${request.headers['user-agent'] ?? ''}\n`,
         headers: { 'Content-Type': 'text/plain' },
       }),
     },
+    // A redirect, so curl -L can be exercised.
+    '/old': { status: 301, headers: { Location: '/' }, body: '' },
     '/search': {
       handler: (request) => {
         const sql = `SELECT id, name, email FROM customers WHERE name = '${request.query.q ?? ''}'`;
@@ -84,7 +86,7 @@ describe('dynamic routes', () => {
       headers: { 'X-Role': 'admin' },
       body: 'a=1',
     });
-    expect(response.body).toBe('method=POST q=hi body=a=1 role=admin\n');
+    expect(response.body).toBe('method=POST q=hi body=a=1 role=admin ua=\n');
     expect(response.headers['Content-Type']).toBe('text/plain');
   });
 
@@ -110,6 +112,22 @@ describe('curl against a dynamic site', () => {
     expect((await t.run("curl -H 'X-Role: admin' http://10.20.0.10/echo")).stdout).toContain(
       'role=admin',
     );
+    // HTTP header names are case-insensitive: a lowercase -H must match just the same.
+    expect((await t.run("curl -H 'x-role: admin' http://10.20.0.10/echo")).stdout).toContain(
+      'role=admin',
+    );
+    // -A sets the User-Agent (previously accepted but ignored).
+    expect((await t.run("curl -A 'Mozilla/5.0' http://10.20.0.10/echo")).stdout).toContain(
+      'ua=Mozilla/5.0',
+    );
+  });
+
+  it('follows redirects only with -L', async () => {
+    const t = h();
+    // Without -L, a 301 yields no body and does not reach the target page.
+    expect((await t.run('curl http://10.20.0.10/old')).stdout).not.toContain('NovaCorp portal');
+    // With -L, curl follows the Location to '/'.
+    expect((await t.run('curl -L http://10.20.0.10/old')).stdout).toContain('NovaCorp portal');
   });
 
   it('injects SQL through the search endpoint', async () => {
