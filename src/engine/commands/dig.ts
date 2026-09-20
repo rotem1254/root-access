@@ -43,7 +43,7 @@ export const dig = defineCommand({
           `; <<>> DiG 9.18.28 <<>> -x ${reverse}\n;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN\n`,
         );
       }
-      return name ? 0 : 0;
+      return 0;
     }
     const target = outcome.options.operands.find((a) => !a.startsWith('@'));
     if (target === undefined) {
@@ -53,7 +53,7 @@ export const dig = defineCommand({
     const ip = ctx.network.resolve(target);
     if (short) {
       ctx.stdout(ip ? `${ip}\n` : '');
-      return ip ? 0 : 0;
+      return 0;
     }
     ctx.stdout(`; <<>> DiG 9.18.28 <<>> ${target}\n;; global options: +cmd\n`);
     if (ip) {

@@ -40,6 +40,17 @@ describe('ip branches', () => {
     expect((await h.run('ip route')).stdout).toContain('10.10.0.0/24 dev eth0 proto kernel');
     expect((await h.run('ip neigh')).stderr).toContain('is unknown');
   });
+
+  it('computes the network base correctly for a non-/24 mask', async () => {
+    const host: HostDefinition = {
+      hostname: 'wide',
+      users: [{ name: 'guest', uid: 1000 }],
+      net: { interfaces: [{ name: 'eth0', ip: '10.10.5.20', netmask: '255.255.0.0' }] },
+    };
+    const h = createHarness({ commands: LINUX_COMMANDS, host, user: 'guest' });
+    // 10.10.5.20/16 lives on the 10.10.0.0/16 network, not 10.10.5.0.
+    expect((await h.run('ip route')).stdout).toContain('10.10.0.0/16 dev eth0 proto kernel');
+  });
 });
 
 describe('netstat and ss programs column', () => {

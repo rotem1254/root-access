@@ -152,7 +152,8 @@ async function runEnc(ctx: CommandContext, args: readonly string[]): Promise<num
     }
     const result = opensslDecrypt(container.bytes, password, options);
     if (!result.ok) {
-      ctx.stderr('bad decrypt\n');
+      // Real openssl distinguishes a missing Salted__ header from a wrong-password padding failure.
+      ctx.stderr(result.reason === 'bad-magic' ? 'bad magic number\n' : 'bad decrypt\n');
       return 1;
     }
     output = result.plaintext;

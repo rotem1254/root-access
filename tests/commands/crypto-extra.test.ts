@@ -151,8 +151,10 @@ describe('openssl extra options', () => {
     expect((await t.run('openssl dgst -sha256 nope.txt')).status).toBe(1);
     expect((await t.run('openssl')).stderr).toContain('subcommand is required');
     expect((await t.run('openssl version')).stdout).toContain('OpenSSL 3.0.13');
+    // A plaintext file has no Salted__ header, so openssl reports a bad magic number (distinct from
+    // the "bad decrypt" a wrong password on a real container gives, covered above).
     expect((await t.run('openssl enc -d -aes-256-cbc -in a.txt -k pw')).stderr).toBe(
-      'bad decrypt\n',
+      'bad magic number\n',
     );
   });
 

@@ -9,6 +9,13 @@ export function macFor(iface: NetworkInterface): string {
   return `02:42:${octets.map(hex).join(':')}`;
 }
 
+/** Network (subnet) address for an IP + netmask: the bitwise AND, so 10.10.5.20/16 → 10.10.0.0. */
+export function networkOf(ip: string, netmask: string): string {
+  const a = ip.split('.').map(Number);
+  const m = netmask.split('.').map(Number);
+  return a.map((octet, i) => octet & (m[i] ?? 0)).join('.');
+}
+
 /** Broadcast address for an IP + netmask (a /24 → x.y.z.255). */
 export function broadcastOf(ip: string, netmask: string): string {
   const a = ip.split('.').map(Number);

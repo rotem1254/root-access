@@ -168,7 +168,10 @@ describe('dig and nslookup', () => {
 describe('nc', () => {
   it('grabs a banner and tests ports', async () => {
     const h = harness();
-    expect((await h.run('nc -v vault 22 < /dev/null')).stdout).toContain('SSH-2.0-OpenSSH_9.6p1');
+    const banner = await h.run('nc -v vault 22 < /dev/null');
+    expect(banner.stdout).toContain('SSH-2.0-OpenSSH_9.6p1');
+    // The verbose success line names the port from /etc/services, like real nc.
+    expect(banner.stderr).toContain('[tcp/ssh]');
     expect((await h.run('nc -z vault 8080')).status).toBe(0);
     expect((await h.run('nc -z vault 3306')).status).toBe(1);
   });

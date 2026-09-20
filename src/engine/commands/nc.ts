@@ -1,5 +1,5 @@
 import { serveHttp, statusText } from '../network/http';
-import { defaultBanner } from '../network/services';
+import { defaultBanner, serviceName } from '../network/services';
 import { parseOptions } from './args';
 import { defineCommand } from './define';
 
@@ -61,7 +61,9 @@ export const nc = defineCommand({
       return 1;
     }
     if (o.has('v')) {
-      const label = service.name ? `[tcp/${service.name}] ` : '';
+      // Real nc names the port from /etc/services: `... port [tcp/ssh] succeeded!`.
+      const name = serviceName(port, service.name);
+      const label = name === 'unknown' ? '' : `[tcp/${name}] `;
       ctx.stderr(`Connection to ${host} ${port} port ${label}succeeded!\n`);
     }
     if (o.has('z')) return 0;
