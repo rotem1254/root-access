@@ -26,6 +26,12 @@ import {
   SHORTCUTS_THAT_FAIL as SHORTCUTS7,
   SOLUTION as SOLUTION7,
 } from '../../src/levels/level07/solution';
+import {
+  FLAG as FLAG7B,
+  SHORTCUTS_THAT_FAIL as SHORTCUTS7B,
+  SOLUTION as SOLUTION7B,
+  SSH_PASSWORD as PW7B,
+} from '../../src/levels/level07b/solution';
 import { createGame, type GameHarness, storageStartingAt } from '../helpers/game';
 
 /**
@@ -62,13 +68,14 @@ const playable = (id: string): Level => {
 };
 
 describe('Chapter 2 catalog', () => {
-  it('replaces the Chapter 2 stubs with four playable levels', () => {
+  it('replaces the Chapter 2 stubs with the playable levels', () => {
     const chapter2 = LEVELS.filter((entry) => entry.chapter === 2);
     expect(chapter2.map((entry) => entry.id)).toEqual([
       '04-first-contact',
       '05-open-ports',
       '06-hop-the-fence',
       '07-packet-trail',
+      '07b-persistence',
     ]);
     expect(chapter2.some(isStub)).toBe(false);
     for (const entry of chapter2) {
@@ -86,6 +93,7 @@ describe('Chapter 2 catalog', () => {
     expect(checkFlag(FLAG5, playable('05-open-ports').flagHash)).toBe('match');
     expect(checkFlag(FLAG6, playable('06-hop-the-fence').flagHash)).toBe('match');
     expect(checkFlag(FLAG7, playable('07-packet-trail').flagHash)).toBe('match');
+    expect(checkFlag(FLAG7B, playable('07b-persistence').flagHash)).toBe('match');
   });
 
   it('never stores a Chapter 2 flag as plaintext in the level data', () => {
@@ -169,6 +177,27 @@ describe('Chapter 2 solvability', () => {
     expect(captured).toBe(true);
     expect(h.game.status().completed).toBe(true);
   });
+
+  it('level 7b is solved by ssh + ps/kill + env + file management on the host', async () => {
+    const h = await gameAt('07b-persistence');
+    let onHost = false;
+    let sawBeacon = false;
+    let recovered = false;
+    let captured = false;
+    for (const line of SOLUTION7B) {
+      const answers = line.startsWith('ssh ') ? ['yes', PW7B] : [];
+      const out = await step(h, line, answers);
+      if (line.startsWith('ssh ')) onHost = h.game.shell.session.machine.hostname === 'corp-web-03';
+      if (line === 'ps aux') sawBeacon = out.stdout.includes('exfil-agent');
+      if (line.startsWith('mv ')) recovered = out.stdout.includes(FLAG7B);
+      if (line.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(onHost).toBe(true);
+    expect(sawBeacon).toBe(true);
+    expect(recovered).toBe(true);
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
 });
 
 describe('Chapter 2 anti-shortcuts', () => {
@@ -215,6 +244,15 @@ describe('Chapter 2 anti-shortcuts', () => {
     expect((await step(h, wrongAuth!)).stdout).toContain('401 Authorization Required');
     const grepped = await step(h, grepCapture!);
     expect(grepped.stdout).not.toContain(FLAG7);
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('level 7b: the staged file is a decoy — only a correct recovery reveals the flag', async () => {
+    const h = await gameAt('07b-persistence');
+    await step(h, 'ssh webadmin@corp-web-03', ['yes', PW7B]);
+    expect(h.game.shell.session.machine.hostname).toBe('corp-web-03');
+    const out = await step(h, SHORTCUTS7B[0]!);
+    expect(out.stdout).not.toContain(FLAG7B);
     expect(h.game.status().completed).toBe(false);
   });
 });

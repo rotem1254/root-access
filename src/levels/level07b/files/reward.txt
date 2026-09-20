@@ -1,0 +1,13 @@
+Beacon down, staged data recovered — the host is clean.
+
+This is post-exploitation housekeeping, and it used the whole local toolkit:
+`ps aux` to see what was really running, `kill -9` to stop the attacker's
+beacon, `cat` to read the dropper's config, an environment variable to carry
+the recovery name, and `mkdir`/`mv` to pull the staged file out of the spool
+the beacon controlled.
+
+Your flag:
+
+    FLAG{r00t3d_0ut_th3_b34c0n}
+
+Submit it:  submit FLAG{r00t3d_0ut_th3_b34c0n}

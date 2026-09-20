@@ -8,7 +8,7 @@ flags and progress through a story. It is built for pre-military cyber cadets (~
 teaches a genuine, transferable skill that works the same way on a real Linux system.
 
 **This is the full game**: the engine, a faithful bash-like shell with ~65 commands, the level and
-scoring system, save/load, the terminal UI, an end-of-run scoring screen, and **28 playable levels**
+scoring system, save/load, the terminal UI, an end-of-run scoring screen, and **29 playable levels**
 end to end. It opens with **Chapter 0 — a 13-step guided path for absolute beginners** (13 hand-held
 lessons ending in an unassisted incident-response capstone) that teaches Linux from zero: looking at
 files, navigating, `grep`, pipes, permissions, `sudo`/root, `find`, file management, text processing,
