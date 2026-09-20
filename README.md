@@ -8,10 +8,15 @@ flags and progress through a story. It is built for pre-military cyber cadets (~
 teaches a genuine, transferable skill that works the same way on a real Linux system.
 
 **This is the full game**: the engine, a faithful bash-like shell with ~65 commands, the level and
-scoring system, save/load, the terminal UI, an end-of-run scoring screen, and all five chapters —
+scoring system, save/load, the terminal UI, an end-of-run scoring screen, and **28 playable levels**
+end to end. It opens with **Chapter 0 — a 13-step guided path for absolute beginners** (13 hand-held
+lessons ending in an unassisted incident-response capstone) that teaches Linux from zero: looking at
+files, navigating, `grep`, pipes, permissions, `sudo`/root, `find`, file management, text processing,
+processes (`ps`/`kill`), environment variables and networking (`ssh`). Then the five story chapters —
 "Initial Access", "Lateral Movement" (a simulated network with ssh pivoting), "Breaking the Cipher"
 (hashing, cracking and encryption), "The Way In" (web: robots.txt, IDOR and SQL injection) and the
-"Root Access" finale that chains them all — **15 playable levels** end to end.
+"Root Access" finale that chains them all. A free-practice **sandbox** and a **visual journey map**
+round it out.
 
 ## Running it
 
@@ -49,6 +54,12 @@ Type Linux commands at the prompt, just like a real terminal. Useful game comman
 Tab completes commands and paths, the up/down arrows browse history, Ctrl+C cancels a line, and
 Ctrl+L clears the screen. On a tablet, an on-screen key bar provides Tab, the arrows and Ctrl+C.
 
+The side panel has a **Map** tab — a visual journey of every level and its status, where you can
+click any unlocked level to jump to it — plus **Story**, **Hints**, **Skills** and a bilingual
+**Commands** reference. A first-visit welcome screen explains the game (reopen it with the **?**
+button), the **🧪 Practice** button drops you into a free sandbox, and the **⚙** button opens display
+settings (adjustable text size and a high-contrast theme, saved per viewer).
+
 Progress is saved in `localStorage`, so you can close the tab and come back.
 
 ## Architecture
@@ -58,7 +69,7 @@ src/
   engine/            pure logic, no DOM — fully testable in Node
     util/            byte strings, base64, sha256, seeded PRNG, clock, ls/size formatting
     fs/              VirtualFS, POSIX paths, Linux permissions, node types, serialization
-    system/          user/group database, sudoers, the Ubuntu-like base machine image
+    system/          user/group database, sudoers, process table, the Ubuntu-like base machine image
     shell/           lexer, parser, expansion, glob, executor, interactive Shell, completion
     network/         hosts with IPs, DNS, per-interface reachability, services, HTTP, pcap
     crypto/          digests, hash identification, OpenSSL AES container, a simplified GPG
@@ -66,9 +77,10 @@ src/
     commands/        one file per command, a shared Command interface, GNU-style option parsing
       game/          mission, hint, submit, status, reset, levels
     game/            Game orchestrator, level model, scoring, flags, storage, events
-  levels/            all 11 levels, each self-contained data
-  ui/                xterm Terminal, LineEditor, keymap, Panels/HUD, boot sequence, touch keys
-  content/           strings.ts (UI chrome, i18n-ready) and ASCII banners
+  levels/            all 28 levels plus the practice sandbox, each self-contained data
+  ui/                xterm Terminal, LineEditor, keymap, Panels/HUD (incl. journey map),
+                     welcome + display-settings dialogs, boot sequence, touch keys
+  content/           strings.ts (UI chrome, i18n-ready), the command reference and ASCII banners
   styles/            design tokens and layout
 tests/               engine, commands, ui, and per-level solvability + anti-shortcut tests
 ```
@@ -91,11 +103,14 @@ Key rules (enforced, see `CLAUDE.md`):
 ## Commands
 
 Shell builtins: `cd`, `pwd`, `echo`, `printf`, `export`, `unset`, `history`, `help`, `exit`, `logout`,
-`true`, `false`, `clear`.
+`kill`, `true`, `false`, `clear`.
 
 Programs: `ls`, `cat`, `file`, `strings`, `grep`, `head`, `tail`, `wc`, `sort`, `uniq`, `cut`,
 `base64`, `find`, `su`, `sudo`, `env`, `whoami`, `id`, `hostname`, `man`, `mkdir`, `touch`, `rm`, `cp`,
-`mv`, `chmod`.
+`mv`, `chmod`, `ps`.
+
+Processes: `ps` (`aux`, `-ef`, `-e`) lists processes and `kill` ends them (`kill PID`, `kill -9`,
+`kill -l`); a level defines the machine's running processes as data.
 
 Networking: `ip` (`a`/`route`), `ifconfig`, `ping`, `nmap` (`-p`, `-sV`, `-F`, CIDR sweeps),
 `netstat`, `ss`, `ssh`, `nc`, `curl`, `wget`, `dig`, `nslookup`, `tcpdump -r`.
@@ -119,7 +134,10 @@ Levels are pure data — adding one never touches engine code.
 1. Create `src/levels/levelNN/index.ts` exporting a `Level` (see the `Level` type in
    `src/engine/game/level.ts` and level 1 as a template). Give it an `id`, `chapter`, `title`,
    `briefing`, `objective`, `skills`, `startUser`/`startHost`/`startCwd`, any `users`/`groups`/
-   `sudoers`, an `fs` map of files, progressive `hints`, a `parTimeSec`, and a `flagHash`.
+   `sudoers`, optional `processes` (shown by `ps`, ended by `kill`), an `fs` map of files, progressive
+   `hints`, a `parTimeSec`, and a `flagHash`. An optional `onCommand(event, api)` hook can coach the
+   player after each command (the Chapter 0 lessons use it), and can reveal a flag it holds only as a
+   sealed reward — `api.echo(utf8Decode(unseal(reward)))` — so there is no file to `cat` as a shortcut.
 2. Compute the hash: `npm run hash-flag -- 'FLAG{your_flag_here}'` and paste it as `flagHash`.
 3. Put any flag-bearing story files in `levelNN/files/` and import them with `?sealed`
    (`import note from './files/note.txt?sealed'`), routed through `asSealed(...)`. Keep the plaintext
@@ -157,6 +175,10 @@ plaintext. For a packet capture, build one with `encodePcap(summary)` and store 
 
 ## Story
 
+Chapter 0 stands apart from the story: it is a guided bootcamp that takes an absolute beginner from
+"what is a terminal?" to running a small incident-response investigation on their own. The NovaCorp
+story then begins in Chapter 1.
+
 You are a junior security analyst hired to investigate NovaCorp, a company suspected of leaking
 customer data. Chapter 1 takes you from a hidden note on an old workstation, through a break-in
 buried in a server's logs, to a locked account whose password was left in a world-readable backup.
@@ -178,7 +200,9 @@ commands are real English Linux. Level briefings, objectives and hints are trans
 (`src/levels/translations.he.ts`, merged in `src/levels/index.ts`); terminal command output — bash
 and coreutils errors, man pages — stays English by design, since reading real errors is part of the
 lesson. The panel is a keyboard-navigable ARIA tablist, focus is always visible, there is a
-skip-to-terminal link, and xterm runs in screen-reader mode.
+skip-to-terminal link, and xterm runs in screen-reader mode. A **⚙ display-settings** dialog offers
+four text sizes and a high-contrast theme, applied live to both the terminal and the panels and saved
+per viewer.
 
 ## Deploying
 
