@@ -1,0 +1,13 @@
+Recovered. You ran a full investigation end to end.
+
+You listed the processes and stopped a live backdoor (ps / kill), searched the
+whole filesystem for what the intruder dropped (find … 2>/dev/null), read the
+config it left behind (cat), and used the credential it had harvested to read a
+file only root could open (sudo). That chain — see what is running, find what
+was left, read it, escalate — is exactly how real incident response works.
+
+Your flag:
+
+    FLAG{full_k1ll_ch41n}
+
+Submit it:  submit FLAG{full_k1ll_ch41n}

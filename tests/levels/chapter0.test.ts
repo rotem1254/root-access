@@ -106,6 +106,12 @@ import {
   SOLUTION as SOLL,
   SSH_PASSWORD,
 } from '../../src/levels/level00l/solution';
+import {
+  FLAG as FLAGM,
+  SHORTCUTS_THAT_FAIL as SHORTM,
+  SOLUTION as SOLM,
+  SUDO_PASSWORD as CAPSTONE_PW,
+} from '../../src/levels/level00m/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -429,6 +435,31 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00l-networking');
     const out = await stepAnswering(h, SHORTL[0]!);
     expect(out.stdout).not.toContain(FLAGL);
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('capstone (incident response): kill, find, read, sudo — the full chain', async () => {
+    const h = await tutorialAt('00m-capstone');
+    let captured = false;
+    for (const cmd of SOLM) {
+      if (cmd === CAPSTONE_PW) continue; // consumed as the sudo prompt answer below
+      const answers = cmd.startsWith('sudo') ? [CAPSTONE_PW] : [];
+      const out = await stepAnswering(h, cmd, answers);
+      if (cmd === 'ps aux') expect(out.stdout).toContain('nc -lvnp 4444');
+      if (cmd.startsWith('find')) expect(out.stdout).toContain('exfil.conf');
+      if (cmd.startsWith('cat /var')) expect(out.stdout).toContain('gu3st-p4ss');
+      if (cmd.startsWith('sudo')) expect(out.stdout).toContain(FLAGM);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('capstone cannot be shortcut: the loot is root-only', async () => {
+    const h = await tutorialAt('00m-capstone');
+    const out = await stepAnswering(h, SHORTM[0]!);
+    expect(out.stderr).toContain('Permission denied');
+    expect(out.stdout).not.toContain(FLAGM);
     expect(h.game.status().completed).toBe(false);
   });
 });
