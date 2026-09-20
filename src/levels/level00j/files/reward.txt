@@ -1,0 +1,12 @@
+Miner terminated — the CPU fans finally slow down.
+
+You just did incident response: `ps aux` showed every process, you spotted the
+one that did not belong by its command line and its CPU use, and you stopped it
+by pid. The miner ignored a polite SIGTERM, so you forced it with SIGKILL
+(kill -9), the signal a process cannot catch or ignore.
+
+Your flag:
+
+    FLAG{k1ll_th3_m1n3r}
+
+Submit it:  submit FLAG{k1ll_th3_m1n3r}

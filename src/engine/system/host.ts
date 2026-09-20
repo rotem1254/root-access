@@ -1,5 +1,6 @@
 import type { FSDefinition } from '../fs/definition';
 import type { HostNetwork } from '../network/types';
+import type { ProcessDefinition } from './processes';
 import type { SudoRule } from './sudoers';
 
 export interface UserDefinition {
@@ -39,4 +40,6 @@ export interface HostDefinition {
   homeMode?: string;
   /** Network interfaces and listening services. Defaults to a single eth0 when omitted. */
   net?: HostNetwork;
+  /** Running processes, on top of the base system's (init, sshd, …). Shown by `ps`, ended by `kill`. */
+  processes?: readonly ProcessDefinition[];
 }

@@ -5,6 +5,7 @@ import { Network } from '../network/Network';
 import type { HostNetwork, NetworkDefinition } from '../network/types';
 import type { Clock } from '../util/clock';
 import type { HostDefinition } from './host';
+import { buildProcessTable, ProcessTable } from './processes';
 import { BASE_SUDO_RULES, type SudoRule } from './sudoers';
 import { BASE_GROUPS, BASE_USERS, UserDB } from './UserDB';
 
@@ -14,12 +15,21 @@ export class Machine {
   readonly fs: VirtualFS;
   readonly users: UserDB;
   readonly sudoers: readonly SudoRule[];
+  /** The running processes, listed by `ps` and ended by `kill`. */
+  readonly processes: ProcessTable;
 
-  constructor(hostname: string, fs: VirtualFS, users: UserDB, sudoers: readonly SudoRule[]) {
+  constructor(
+    hostname: string,
+    fs: VirtualFS,
+    users: UserDB,
+    sudoers: readonly SudoRule[],
+    processes: ProcessTable,
+  ) {
     this.hostname = hostname;
     this.fs = fs;
     this.users = users;
     this.sudoers = sudoers;
+    this.processes = processes;
   }
 }
 
@@ -80,7 +90,7 @@ export function buildMachine(host: HostDefinition, options: BuildMachineOptions)
   });
   applyFsDefinition(fs.root, base, users, options.time);
   applyFsDefinition(fs.root, host.fs ?? {}, users, options.time);
-  return new Machine(host.hostname, fs, users, sudoers);
+  return new Machine(host.hostname, fs, users, sudoers, buildProcessTable(host.processes));
 }
 
 /** A host's network metadata, defaulting to a single eth0 when the level does not specify one. */

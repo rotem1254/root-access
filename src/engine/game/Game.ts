@@ -237,6 +237,7 @@ export class Game {
       ...(level.users ? { users: level.users } : {}),
       ...(level.groups ? { groups: level.groups } : {}),
       ...(level.sudoers ? { sudoers: level.sudoers } : {}),
+      ...(level.processes ? { processes: level.processes } : {}),
       fs: level.fs,
       ...(level.motd ? { motd: level.motd } : {}),
       ...(level.homeMode ? { homeMode: level.homeMode } : {}),

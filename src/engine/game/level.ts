@@ -1,6 +1,7 @@
 import type { FSDefinition } from '../fs/definition';
 import type { NetworkDefinition, HostNetwork } from '../network/types';
 import type { GroupDefinition, HostDefinition, UserDefinition } from '../system/host';
+import type { ProcessDefinition } from '../system/processes';
 import type { SudoRule } from '../system/sudoers';
 
 /** Player-facing text, ready for a Hebrew translation of the side panel later. */
@@ -28,6 +29,8 @@ export interface Level {
   users?: readonly UserDefinition[];
   groups?: readonly GroupDefinition[];
   sudoers?: readonly SudoRule[];
+  /** Running processes on the start host, listed by `ps` and ended by `kill`. */
+  processes?: readonly ProcessDefinition[];
   fs: FSDefinition;
   motd?: string;
   homeMode?: string;

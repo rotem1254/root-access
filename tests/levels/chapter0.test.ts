@@ -90,6 +90,11 @@ import {
   SHORTCUTS_THAT_FAIL as SHORTI,
   SOLUTION as SOLI,
 } from '../../src/levels/level00i/solution';
+import {
+  FLAG as FLAGJ,
+  SHORTCUTS_THAT_FAIL as SHORTJ,
+  SOLUTION as SOLJ,
+} from '../../src/levels/level00j/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -303,6 +308,37 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00i-text-processing');
     const out = await step(h, SHORTI[0]!);
     expect(out.stdout).not.toContain(FLAGI);
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('lesson 10 (processes): ps finds the miner, kill -9 ends it and reveals the flag', async () => {
+    const h = await tutorialAt('00j-processes');
+    let captured = false;
+    for (const cmd of SOLJ) {
+      const out = await step(h, cmd);
+      if (cmd === 'ps aux') expect(out.stdout).toContain('kdevtmpfsi');
+      // A polite kill leaves the stubborn miner running: no flag yet.
+      if (cmd === 'kill 1337') expect(out.stdout).not.toContain(FLAGJ);
+      // SIGKILL ends it and the console prints the flag.
+      if (cmd === 'kill -9 1337') expect(out.stdout).toContain(FLAGJ);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 10 coaches: ps aux points at the miner, a polite kill points at kill -9', async () => {
+    const h = await tutorialAt('00j-processes');
+    expect((await step(h, 'ps aux')).stdout).toContain('kill 1337');
+    expect((await step(h, 'kill 1337')).stdout).toContain('kill -9 1337');
+    // And the miner really is still running after the polite kill.
+    expect((await step(h, 'ps aux')).stdout).toContain('kdevtmpfsi');
+  });
+
+  it('lesson 10 cannot be shortcut: ps shows the miner but never the flag', async () => {
+    const h = await tutorialAt('00j-processes');
+    const out = await step(h, SHORTJ[0]!);
+    expect(out.stdout).not.toContain(FLAGJ);
     expect(h.game.status().completed).toBe(false);
   });
 });

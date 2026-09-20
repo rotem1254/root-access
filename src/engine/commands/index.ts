@@ -31,8 +31,10 @@ import { mv } from './mv';
 import { logout } from './logout';
 import { ls } from './ls';
 import { man } from './man';
+import { kill } from './kill';
 import { ping } from './ping';
 import { printf } from './printf';
+import { ps } from './ps';
 import { rm } from './rm';
 import { pwd } from './pwd';
 import { sort } from './sort';
@@ -87,6 +89,7 @@ export const LINUX_COMMANDS: readonly Command[] = [
   ifconfig,
   ip,
   john,
+  kill,
   logout,
   md5sum,
   mkdir,
@@ -100,6 +103,7 @@ export const LINUX_COMMANDS: readonly Command[] = [
   openssl,
   ping,
   printf,
+  ps,
   pwd,
   rm,
   sha1sum,
