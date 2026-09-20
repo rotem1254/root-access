@@ -59,4 +59,22 @@ export const level01: Level = {
     'Decode the memo with `base64 -d memo.txt` to reveal the second half. Put it directly after the first half shown in `.handover`, then submit the whole thing, e.g. `submit FLAG{...}`.',
   ],
   parTimeSec: 120,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    // A plain ls hides the dotfile — nudge toward the technique the level is about, without spoiling.
+    if (event.name === 'ls' && !event.args.some((a) => a.includes('a')) && api.once('ls-plain')) {
+      say(
+        'Looks empty? Files that start with a dot are hidden. Try:  ls -a',
+        'נראה ריק? קבצים שמתחילים בנקודה מוסתרים. נסו:  ls -a',
+      );
+      return;
+    }
+    if (event.name === 'base64' && event.exitCode === 0 && api.once('decoded')) {
+      say(
+        'Decoded — it really was hidden in plain sight. Assemble the flag and submit it.',
+        'פוענח — זה באמת היה חבוי לעין כול. הרכיבו את הדגל והגישו אותו.',
+      );
+    }
+  },
 };

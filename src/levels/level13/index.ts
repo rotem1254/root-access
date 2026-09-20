@@ -128,4 +128,14 @@ export const level13: Level = {
     'Ticket #1 is the internal one: `curl "http://helpdesk.novacorp.internal/ticket?id=1"`. The break-glass token in it is the flag.',
   ],
   parTimeSec: 300,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    if (event.name === 'curl' && event.args.join(' ').includes('ticket?id=') && api.once('idor')) {
+      say(
+        'That ticket loaded straight from its id, with no ownership check. The id is just a number — count DOWN toward 1 to read tickets that are not yours.',
+        'הכרטיס נטען ישירות לפי ה-id, בלי בדיקת בעלות. ה-id הוא רק מספר — ספרו כלפי מטה לכיוון 1 כדי לקרוא כרטיסים שאינם שלכם.',
+      );
+    }
+  },
 };

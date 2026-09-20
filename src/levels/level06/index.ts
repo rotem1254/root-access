@@ -120,4 +120,45 @@ export const level06: Level = {
     'On the jump host read `cat /home/analyst/netops-notes.txt` for the dbadmin password, then `ssh dbadmin@10.10.9.20` and `cat /opt/export/README`. The flag is the signing key on that page.',
   ],
   parTimeSec: 480,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    // Trying to reach the segmented DB directly can't work — point at the pivot.
+    if (
+      event.name === 'ssh' &&
+      arg.includes('10.10.9.20') &&
+      event.exitCode !== 0 &&
+      api.once('no-route')
+    ) {
+      say(
+        'No route from here to 10.10.9.0/24. You need a machine that can see it — ssh to the jump host first.',
+        'אין נתיב מכאן ל-10.10.9.0/24. צריך מכונה שרואה אותה — התחברו קודם ל-jump host ב-ssh.',
+      );
+      return;
+    }
+    if (
+      event.name === 'ssh' &&
+      arg.includes('corp-jump01') &&
+      event.exitCode === 0 &&
+      api.once('on-jump')
+    ) {
+      say(
+        'You are on the jump host. It has a second interface into the server network — `ip a` shows it. Find the db credentials here.',
+        'אתם על ה-jump host. יש לו ממשק שני אל רשת השרתים — `ip a` יראה אותו. מצאו כאן את פרטי ה-db.',
+      );
+      return;
+    }
+    if (
+      event.name === 'ssh' &&
+      arg.includes('dbadmin@') &&
+      event.exitCode === 0 &&
+      api.once('on-db')
+    ) {
+      say(
+        'On corp-db01 now. Read the export it holds:  cat /opt/export/README',
+        'עכשיו על corp-db01. קראו את הייצוא שהוא מחזיק:  cat /opt/export/README',
+      );
+    }
+  },
 };

@@ -106,4 +106,18 @@ export const level08: Level = {
     'One file reports FAILED: q3-renewals.csv. Read it with `cat q3-renewals.csv` — something was appended after the manifest was signed, and the audit token there is the flag.',
   ],
   parTimeSec: 240,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    if (
+      event.name === 'sha256sum' &&
+      event.args.some((a) => a === '-c' || a === '--check') &&
+      api.once('checked')
+    ) {
+      say(
+        'One file FAILS its checksum — that is the tampered delivery. Read that file.',
+        'קובץ אחד נכשל בבדיקת ה-checksum — זהו המשלוח שזויף. קראו את הקובץ הזה.',
+      );
+    }
+  },
 };

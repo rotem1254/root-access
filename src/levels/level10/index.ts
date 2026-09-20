@@ -86,4 +86,21 @@ export const level10: Level = {
     'With the passphrase, run `openssl enc -d -aes-256-cbc -in exports.enc -k Quarter-Seal-2026`. If you get "bad decrypt", the passphrase is wrong — check you decoded the note, not copied it.',
   ],
   parTimeSec: 420,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    if (event.name === 'openssl' && event.exitCode !== 0 && api.once('bad-pass')) {
+      say(
+        'Wrong passphrase. The note is ROT13-encoded — decode it first with tr, then use that value.',
+        'סיסמה שגויה. ההערה מקודדת ב-ROT13 — פענחו אותה קודם עם tr, ואז השתמשו בערך הזה.',
+      );
+      return;
+    }
+    if (event.name === 'tr' && event.exitCode === 0 && api.once('rot13')) {
+      say(
+        'That is the real passphrase. Decrypt now:  openssl enc -d -aes-256-cbc -in exports.enc -k <passphrase>',
+        'זו הסיסמה האמיתית. פענחו עכשיו:  openssl enc -d -aes-256-cbc -in exports.enc -k <passphrase>',
+      );
+    }
+  },
 };

@@ -125,4 +125,18 @@ export const level12: Level = {
     'Follow the backup path: `curl http://portal.novacorp.internal/internal/backup/` lists its files, and `curl http://portal.novacorp.internal/internal/backup/notes.txt` has the audit token.',
   ],
   parTimeSec: 300,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    if (
+      event.name === 'curl' &&
+      event.args.join(' ').includes('robots.txt') &&
+      api.once('robots')
+    ) {
+      say(
+        'robots.txt names a path meant to stay hidden — it is a signpost, not a lock. Fetch that path.',
+        'קובץ robots.txt מציין נתיב שנועד להישאר חבוי — זה תמרור, לא מנעול. משכו את הנתיב הזה.',
+      );
+    }
+  },
 };

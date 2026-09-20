@@ -80,4 +80,27 @@ export const level11: Level = {
     'Now `gpg -d message.asc` works. It asks for the passphrase — it is in brief.txt (ledger-oak-quiet-42). The case seal at the bottom of the message is the flag.',
   ],
   parTimeSec: 360,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    if (event.name === 'gpg' && arg.includes('-d') && event.exitCode !== 0 && api.once('no-key')) {
+      say(
+        "No secret key to decrypt with yet. Import Alex's private key first:  gpg --import alex-private.asc",
+        'עדיין אין מפתח סודי לפענוח. ייבאו קודם את המפתח הפרטי של אלכס:  gpg --import alex-private.asc',
+      );
+      return;
+    }
+    if (
+      event.name === 'gpg' &&
+      arg.includes('--import') &&
+      event.exitCode === 0 &&
+      api.once('imported')
+    ) {
+      say(
+        'Key imported. Now decrypt with the passphrase:  gpg --passphrase <pass> -d message.asc',
+        'המפתח יובא. עכשיו פענחו עם ה-passphrase:  gpg --passphrase <pass> -d message.asc',
+      );
+    }
+  },
 };

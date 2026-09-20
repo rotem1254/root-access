@@ -99,4 +99,33 @@ export const level05: Level = {
     'It is an HTTP service on port 8686. Read it with `curl http://corp-build01:8686/` (or `nc corp-build01 8686`), then submit the token on the page.',
   ],
   parTimeSec: 360,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    // A default nmap only covers the common ports; the service is hiding on a high one.
+    if (
+      event.name === 'nmap' &&
+      !arg.includes('-p') &&
+      event.exitCode === 0 &&
+      api.once('default-scan')
+    ) {
+      say(
+        'The default scan only checks the common ports. Widen it:  nmap -p 8000-9000 -sV corp-build01',
+        'הסריקה הרגילה בודקת רק את הפורטים הנפוצים. הרחיבו:  nmap -p 8000-9000 -sV corp-build01',
+      );
+      return;
+    }
+    if (
+      event.name === 'nmap' &&
+      arg.includes('-p') &&
+      event.exitCode === 0 &&
+      api.once('wide-scan')
+    ) {
+      say(
+        'There it is — a service parked on an odd high port. curl that port to read its page.',
+        'הנה זה — שירות שחונה על פורט גבוה חריג. עשו curl לפורט הזה כדי לקרוא את הדף.',
+      );
+    }
+  },
 };

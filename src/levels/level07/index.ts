@@ -238,4 +238,14 @@ export const level07: Level = {
     'That gives you svc-export and its password. Use them: `curl -u svc-export:Exp0rt-Str3am-2026 http://corp-portal:8080/admin`, then submit the master token from the page.',
   ],
   parTimeSec: 420,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    if (event.name === 'tcpdump' && event.exitCode === 0 && api.once('read-pcap')) {
+      say(
+        'Capture is open, and it is plain HTTP — every header is visible. The Authorization line carries the credential; filter for it with  | grep -i authorization',
+        'הלכידה פתוחה, וזה HTTP רגיל — כל כותרת גלויה. שורת ה-Authorization נושאת את פרטי הכניסה; סננו אותה עם  | grep -i authorization',
+      );
+    }
+  },
 };

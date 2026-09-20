@@ -176,4 +176,22 @@ export const level15: Level = {
     "Decrypt the blob (it is base64-wrapped openssl): `echo '<blob>' | openssl enc -d -a -aes-256-cbc -k Vault-Core-2026`. That prints the deploy password. Then `ssh deploy@corp-core.novacorp.internal`, `cat root-access.txt`, and submit the flag.",
   ],
   parTimeSec: 900,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    if (event.name === 'curl' && /union\s+select/i.test(arg) && api.once('vault')) {
+      say(
+        'The injection dumped the vault: a base64 blob and its passphrase. Decode and decrypt it to recover the deploy password.',
+        'ההזרקה שלפה את הכספת: בלוק base64 והסיסמה שלו. פענחו וחשפו אותו כדי לשחזר את סיסמת ה-deploy.',
+      );
+      return;
+    }
+    if (event.name === 'ssh' && event.exitCode === 0 && api.once('on-core')) {
+      say(
+        'You are on corp-core — root access granted. Read the final file:  cat root-access.txt',
+        'אתם על corp-core — הושגה גישת root. קראו את הקובץ האחרון:  cat root-access.txt',
+      );
+    }
+  },
 };

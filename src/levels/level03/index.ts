@@ -83,4 +83,28 @@ export const level03: Level = {
     'Become admin with `su admin` and enter the password from the backup (R3dOct0ber!2026). Then `cat /home/admin/flag.txt` and submit the flag.',
   ],
   parTimeSec: 360,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    // Being refused here is the whole point — reassure and point at the way in.
+    if (
+      event.name === 'cat' &&
+      arg.includes('/home/admin/flag') &&
+      event.exitCode !== 0 &&
+      api.once('denied')
+    ) {
+      say(
+        'Permission denied — exactly right. You are not admin yet. Find a readable *.bak with the password.',
+        'הגישה נדחתה — בדיוק כך. עדיין אינכם admin. מצאו גיבוי *.bak קריא עם הסיסמה.',
+      );
+      return;
+    }
+    if (event.name === 'su' && event.exitCode === 0 && api.once('became-admin')) {
+      say(
+        'You are admin now. Read the file only admin could:  cat /home/admin/flag.txt',
+        'עכשיו אתם admin. קראו את הקובץ שרק admin יכול:  cat /home/admin/flag.txt',
+      );
+    }
+  },
 };

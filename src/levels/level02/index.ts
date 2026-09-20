@@ -78,4 +78,33 @@ export const level02: Level = {
     'Right after logging in, that user ran a sudo command. Find it with grep <user> /var/log/auth.log | grep COMMAND — it copied the export to a file under /home/mreyes/.cache. cat that exact path to read the flag.',
   ],
   parTimeSec: 420,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    // Trying to list a staff home fails by design — point back to the log, not a wildcard.
+    if (
+      event.name === 'ls' &&
+      arg.includes('/home/') &&
+      event.exitCode !== 0 &&
+      api.once('home-denied')
+    ) {
+      say(
+        'The staff homes are locked down — no listing. Recover the exact path from auth.log itself.',
+        'תיקיות הבית של הצוות נעולות — אין רשימה. שחזרו את הנתיב המדויק מתוך auth.log עצמו.',
+      );
+      return;
+    }
+    if (
+      event.name === 'cat' &&
+      arg.includes(STAGED_PATH) &&
+      event.exitCode === 0 &&
+      api.once('read-loot')
+    ) {
+      say(
+        'That is the staged export. The DLP tripwire stamped the marker inside — that is your flag.',
+        'זהו הייצוא שהוכן. מלכודת ה-DLP הטביעה בפנים את הסימן — זה הדגל שלכם.',
+      );
+    }
+  },
 };

@@ -122,4 +122,14 @@ export const level04: Level = {
     'The host with 80/tcp open is 10.10.0.30. Read what it serves with `curl http://10.10.0.30/`, then submit the token on that page.',
   ],
   parTimeSec: 300,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    if (event.name === 'nmap' && event.exitCode === 0 && api.once('scanned')) {
+      say(
+        'Scan is in. One host on your subnet answers on port 80 — open it with curl.',
+        'הסריקה נכנסה. מארח אחד ברשת שלכם עונה על פורט 80 — פתחו אותו עם curl.',
+      );
+    }
+  },
 };

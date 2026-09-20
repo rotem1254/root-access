@@ -152,4 +152,23 @@ export const level14: Level = {
     'UNION across to the staff table with a matching three columns: `curl "http://shop.novacorp.internal/search?q=\' UNION SELECT username, secret, role FROM staff -- "`. The root row’s secret is the flag.',
   ],
   parTimeSec: 480,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    if (event.name === 'curl' && /union\s+select/i.test(arg) && api.once('dumped')) {
+      say(
+        'The UNION worked — that is the staff table talking. The secret column is your flag.',
+        'ה-UNION עבד — זו טבלת הצוות מדברת. עמודת ה-secret היא הדגל שלכם.',
+      );
+      return;
+    }
+    // The classic first probe: a lone quote that breaks the query proves it is injectable.
+    if (event.name === 'curl' && /search\?q='(?!.*union)/i.test(arg) && api.once('injectable')) {
+      say(
+        "A single quote broke the SQL — the endpoint is injectable. Balance it (' OR '1'='1) then add a UNION SELECT.",
+        "גרש בודד שבר את ה-SQL — נקודת הקצה פגיעה. אזנו אותו (' OR '1'='1) ואז הוסיפו UNION SELECT.",
+      );
+    }
+  },
 };

@@ -101,4 +101,22 @@ export const level09: Level = {
     'The cracked account is mreyes. Use that password with `su mreyes`, then `cat /home/mreyes/notes.txt` — the incident reference on that page is the flag.',
   ],
   parTimeSec: 420,
+  onCommand: (event, api) => {
+    const say = (en: string, he: string): void =>
+      api.echo(`\x1b[36m${api.locale === 'he' ? he : en}\x1b[0m`);
+    const arg = event.args.join(' ');
+    if (event.name === 'john' && arg.includes('--wordlist') && api.once('cracking')) {
+      say(
+        'Run through the wordlist. See what fell:  john --show hashes.txt',
+        'עברתם על רשימת המילים. ראו מה נפל:  john --show hashes.txt',
+      );
+      return;
+    }
+    if (event.name === 'su' && event.exitCode === 0 && api.once('became')) {
+      say(
+        'That password worked — you are mreyes now. Read the notes in the home directory.',
+        'הסיסמה עבדה — עכשיו אתם mreyes. קראו את ההערות בתיקיית הבית.',
+      );
+    }
+  },
 };
