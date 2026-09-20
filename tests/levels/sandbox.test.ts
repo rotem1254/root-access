@@ -35,6 +35,15 @@ describe('practice sandbox', () => {
     expect(summary.levelsTotal).toBe(LEVELS.filter((e) => !isStub(e) && !e.practice).length);
   });
 
+  it('does not inflate the HUD level counter (status.levelsTotal excludes the sandbox)', async () => {
+    const h = await createGame(LEVELS);
+    const missions = LEVELS.filter((e) => !isStub(e) && !e.practice).length;
+    expect(h.game.status().levelsTotal).toBe(missions);
+    // Even while standing in the sandbox, the total is the missions, not missions + 1.
+    h.game.goToLevel('sandbox');
+    expect(h.game.status().levelsTotal).toBe(missions);
+  });
+
   it('is always reachable via goToLevel, even from the first level', async () => {
     const h = await createGame(LEVELS);
     expect(h.game.goToLevel('sandbox')).toBe('ok');

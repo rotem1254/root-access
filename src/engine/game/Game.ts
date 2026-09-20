@@ -413,8 +413,12 @@ export class Game {
   status(): StatusInfo {
     const level = this.currentLevel;
     const progress = this.save.progress[level.id];
-    const completedCount = this.catalog.filter((entry) => this.isCompleted(entry.id)).length;
-    const playableCount = this.catalog.filter((entry) => !isStub(entry)).length;
+    // The free-practice sandbox is not part of the progression, so it must not inflate the totals.
+    const isMission = (entry: LevelEntry): entry is Level => !isStub(entry) && !entry.practice;
+    const completedCount = this.catalog.filter(
+      (entry) => isMission(entry) && this.isCompleted(entry.id),
+    ).length;
+    const playableCount = this.catalog.filter(isMission).length;
     const totalScore = Object.values(this.save.progress).reduce(
       (sum, p) => sum + (p.score?.total ?? 0),
       0,
