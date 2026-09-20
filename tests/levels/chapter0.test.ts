@@ -95,6 +95,11 @@ import {
   SHORTCUTS_THAT_FAIL as SHORTJ,
   SOLUTION as SOLJ,
 } from '../../src/levels/level00j/solution';
+import {
+  FLAG as FLAGK,
+  SHORTCUTS_THAT_FAIL as SHORTK,
+  SOLUTION as SOLK,
+} from '../../src/levels/level00k/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -339,6 +344,41 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00j-processes');
     const out = await step(h, SHORTJ[0]!);
     expect(out.stdout).not.toContain(FLAGJ);
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  it('lesson 11 (environment): export the required variable to run the tool', async () => {
+    const h = await tutorialAt('00k-environment');
+    let captured = false;
+    for (const cmd of SOLK) {
+      const out = await step(h, cmd);
+      if (cmd === 'cat config.txt') expect(out.stdout).toContain('unlock-2026');
+      // Exporting the correct variable unlocks the tool and prints the flag.
+      if (cmd.startsWith('export')) expect(out.stdout).toContain(FLAGK);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 11: the exported variable is readable with echo $VAR', async () => {
+    const h = await tutorialAt('00k-environment');
+    await step(h, 'export BACKUP_KEY=unlock-2026');
+    expect((await step(h, 'echo $BACKUP_KEY')).stdout).toContain('unlock-2026');
+  });
+
+  it('lesson 11 coaches: env points at config, the wrong value is corrected', async () => {
+    const h = await tutorialAt('00k-environment');
+    expect((await step(h, 'env')).stdout).toContain('BACKUP_KEY');
+    const wrong = await step(h, 'export BACKUP_KEY=guess');
+    expect(wrong.stdout).toContain('config.txt');
+    expect(wrong.stdout).not.toContain(FLAGK);
+  });
+
+  it('lesson 11 cannot be shortcut: config holds the key value, not the flag', async () => {
+    const h = await tutorialAt('00k-environment');
+    const out = await step(h, SHORTK[0]!);
+    expect(out.stdout).not.toContain(FLAGK);
     expect(h.game.status().completed).toBe(false);
   });
 });

@@ -1,0 +1,12 @@
+BACKUP_KEY accepted — the backup tool runs and prints its result.
+
+Environment variables are named values your shell hands to every program it
+runs. `env` lists them, `echo $NAME` prints one, and `export NAME=value` sets
+one. Real tools read secrets, endpoints and options from them exactly like this
+— which is also why a leaked environment can be dangerous.
+
+Your flag:
+
+    FLAG{3nv_v4r14bl3s}
+
+Submit it:  submit FLAG{3nv_v4r14bl3s}
