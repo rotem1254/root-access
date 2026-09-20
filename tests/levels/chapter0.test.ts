@@ -100,6 +100,12 @@ import {
   SHORTCUTS_THAT_FAIL as SHORTK,
   SOLUTION as SOLK,
 } from '../../src/levels/level00k/solution';
+import {
+  FLAG as FLAGL,
+  SHORTCUTS_THAT_FAIL as SHORTL,
+  SOLUTION as SOLL,
+  SSH_PASSWORD,
+} from '../../src/levels/level00l/solution';
 import { storageStartingAt } from '../helpers/game';
 
 async function tutorialAt(id: string): Promise<GameHarness> {
@@ -379,6 +385,50 @@ describe('Chapter 0 — the extra guided lessons', () => {
     const h = await tutorialAt('00k-environment');
     const out = await step(h, SHORTK[0]!);
     expect(out.stdout).not.toContain(FLAGK);
+    expect(h.game.status().completed).toBe(false);
+  });
+
+  // ssh asks two questions in a row (host key, then password); answer any pending prompt in order.
+  async function stepAnswering(
+    h: GameHarness,
+    line: string,
+    answers: readonly string[] = [],
+  ): Promise<{ stdout: string; stderr: string }> {
+    h.take();
+    const queue = [...answers];
+    await h.game.shell.submit(line);
+    while (h.game.shell.inputRequest.kind === 'read') {
+      await h.game.shell.submit(queue.shift() ?? '');
+      await h.game.shell.whenReady();
+    }
+    await h.game.shell.whenReady();
+    return h.take();
+  }
+
+  it('lesson 12 (networking): ping, scan, ssh into the vault and read the flag', async () => {
+    const h = await tutorialAt('00l-networking');
+    let captured = false;
+    for (const cmd of SOLL) {
+      const answers = cmd.startsWith('ssh') ? ['yes', SSH_PASSWORD] : [];
+      const out = await stepAnswering(h, cmd, answers);
+      if (cmd.startsWith('nmap')) expect(out.stdout).toContain('22');
+      if (cmd === 'cat flag.txt') expect(out.stdout).toContain(FLAGL);
+      if (cmd.startsWith('submit')) captured = out.stdout.includes('Level captured!');
+    }
+    expect(captured).toBe(true);
+    expect(h.game.status().completed).toBe(true);
+  });
+
+  it('lesson 12 coaches: ping points at nmap, nmap points at ssh', async () => {
+    const h = await tutorialAt('00l-networking');
+    expect((await stepAnswering(h, 'ping 10.10.0.20')).stdout).toContain('nmap 10.10.0.20');
+    expect((await stepAnswering(h, 'nmap 10.10.0.20')).stdout).toContain('ssh operator@10.10.0.20');
+  });
+
+  it('lesson 12 cannot be shortcut: the flag is on the remote machine', async () => {
+    const h = await tutorialAt('00l-networking');
+    const out = await stepAnswering(h, SHORTL[0]!);
+    expect(out.stdout).not.toContain(FLAGL);
     expect(h.game.status().completed).toBe(false);
   });
 });

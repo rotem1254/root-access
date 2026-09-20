@@ -1,0 +1,12 @@
+You reached another machine over the network and logged in — that is the heart
+of almost everything in security work.
+
+You found your own address (ip a), checked the target was reachable (ping),
+asked what services it was running (nmap), and logged into the one that was open
+(ssh). SSH gives you a real shell on the remote machine; `exit` brings you back.
+
+Your flag:
+
+    FLAG{h0pp3d_th3_n3tw0rk}
+
+Submit it:  submit FLAG{h0pp3d_th3_n3tw0rk}
