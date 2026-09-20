@@ -8,7 +8,14 @@ export type Locale = 'en' | 'he';
 export interface UIStrings {
   appName: string;
   dir: 'ltr' | 'rtl';
-  tabs: { mission: string; story: string; hints: string; skills: string; guide: string };
+  tabs: {
+    mission: string;
+    story: string;
+    hints: string;
+    skills: string;
+    guide: string;
+    map: string;
+  };
   hud: { level: string; time: string; hints: string; score: string; user: string };
   panel: {
     objective: string;
@@ -38,6 +45,7 @@ export interface UIStrings {
   boot: { pressToSkip: string; ready: string };
   capture: { title: string; score: string; next: string };
   guide: { searchPlaceholder: string; noMatches: string };
+  map: { title: string; capturedLabel: string; current: string; locked: string };
   settings: {
     title: string;
     textSize: string;
@@ -67,7 +75,14 @@ export interface UIStrings {
 const en: UIStrings = {
   appName: 'ROOT_ACCESS',
   dir: 'ltr',
-  tabs: { mission: 'Mission', story: 'Story', hints: 'Hints', skills: 'Skills', guide: 'Commands' },
+  tabs: {
+    mission: 'Mission',
+    story: 'Story',
+    hints: 'Hints',
+    skills: 'Skills',
+    guide: 'Commands',
+    map: 'Map',
+  },
   hud: { level: 'Level', time: 'Time', hints: 'Hints', score: 'Score', user: 'User' },
   panel: {
     objective: 'Objective',
@@ -103,6 +118,12 @@ const en: UIStrings = {
   boot: { pressToSkip: 'press any key to skip', ready: 'Ready.' },
   capture: { title: 'FLAG CAPTURED', score: 'Score', next: 'Next level unlocked' },
   guide: { searchPlaceholder: 'Search commands…', noMatches: 'No commands match your search.' },
+  map: {
+    title: 'Your journey',
+    capturedLabel: 'captured',
+    current: 'you are here',
+    locked: 'locked',
+  },
   settings: {
     title: 'Display settings',
     textSize: 'Text size',
@@ -140,7 +161,14 @@ const en: UIStrings = {
 const he: UIStrings = {
   appName: 'ROOT_ACCESS',
   dir: 'rtl',
-  tabs: { mission: 'משימה', story: 'סיפור', hints: 'רמזים', skills: 'מיומנויות', guide: 'פקודות' },
+  tabs: {
+    mission: 'משימה',
+    story: 'סיפור',
+    hints: 'רמזים',
+    skills: 'מיומנויות',
+    guide: 'פקודות',
+    map: 'מפה',
+  },
   hud: { level: 'שלב', time: 'זמן', hints: 'רמזים', score: 'ניקוד', user: 'משתמש' },
   panel: {
     objective: 'מטרה',
@@ -170,6 +198,12 @@ const he: UIStrings = {
   boot: { pressToSkip: 'הקישו מקש כלשהו כדי לדלג', ready: 'מוכן.' },
   capture: { title: 'הדגל נלכד', score: 'ניקוד', next: 'השלב הבא נפתח' },
   guide: { searchPlaceholder: 'חיפוש פקודות…', noMatches: 'אין פקודות שמתאימות לחיפוש.' },
+  map: {
+    title: 'המסע שלכם',
+    capturedLabel: 'נלכדו',
+    current: 'אתם כאן',
+    locked: 'נעול',
+  },
   settings: {
     title: 'הגדרות תצוגה',
     textSize: 'גודל טקסט',

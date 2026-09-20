@@ -4,9 +4,9 @@ import { searchGuide } from '../content/commandGuide';
 import { strings, type UIStrings } from '../content/strings';
 import { clear, el, on } from './dom';
 
-type TabId = 'mission' | 'story' | 'hints' | 'skills' | 'guide';
+type TabId = 'mission' | 'map' | 'story' | 'hints' | 'skills' | 'guide';
 
-const TAB_ORDER: readonly TabId[] = ['mission', 'story', 'hints', 'skills', 'guide'];
+const TAB_ORDER: readonly TabId[] = ['mission', 'map', 'story', 'hints', 'skills', 'guide'];
 
 /** The right-hand side panel: HUD plus Mission / Story / Hints / Skills tabs, keyboard-navigable. */
 export class Panels {
@@ -119,6 +119,7 @@ export class Panels {
     this.tabBar.setAttribute('aria-label', this.ui.a11y.tabsLabel);
     const labels: Record<TabId, string> = {
       mission: this.ui.tabs.mission,
+      map: this.ui.tabs.map,
       story: this.ui.tabs.story,
       hints: this.ui.tabs.hints,
       skills: this.ui.tabs.skills,
@@ -140,6 +141,9 @@ export class Panels {
     switch (this.active) {
       case 'mission':
         this.body.append(this.missionView());
+        break;
+      case 'map':
+        this.body.append(this.mapView());
         break;
       case 'story':
         this.body.append(this.storyView());
@@ -288,6 +292,89 @@ export class Panels {
     });
     renderResults();
     container.append(search, results);
+    return container;
+  }
+
+  private mapView(): HTMLElement {
+    const container = el('div', { class: 'view map-view' });
+    container.append(el('h2', { text: this.ui.map.title }));
+
+    // The journey is the ordered, built missions; the free-practice sandbox has its own button.
+    const missions = this.game
+      .levels()
+      .filter((level) => level.id !== 'sandbox' && level.state !== 'coming-soon');
+    // Use the authoritative counts (matching the HUD) so revisiting a done level does not drop the tally.
+    const status = this.game.status();
+    const captured = status.levelsCompleted;
+    const total = status.levelsTotal;
+
+    const bar = el('div', { class: 'map-progress', attrs: { role: 'img' } });
+    const fillPct = total > 0 ? Math.round((captured / total) * 100) : 0;
+    bar.append(el('div', { class: 'map-progress-fill', attrs: { style: `width:${fillPct}%` } }));
+    const summary = el('p', {
+      class: 'map-summary',
+      text: `${captured} / ${total} ${this.ui.map.capturedLabel}`,
+    });
+    summary.setAttribute('aria-label', `${captured} of ${total} ${this.ui.map.capturedLabel}`);
+    container.append(summary, bar);
+
+    const icon: Record<string, string> = {
+      completed: '✓',
+      current: '▶',
+      unlocked: '○',
+      locked: '🔒',
+      'coming-soon': '…',
+    };
+
+    let chapter = -1;
+    for (const level of missions) {
+      if (level.chapter !== chapter) {
+        chapter = level.chapter;
+        container.append(
+          el('h3', { class: 'map-chapter', text: `${this.ui.panel.chapter} ${chapter}` }),
+        );
+      }
+      const navigable =
+        level.state === 'completed' || level.state === 'current' || level.state === 'unlocked';
+      const label = `${icon[level.state] ?? '•'}  ${level.number}. ${level.title}`;
+      const note =
+        level.state === 'current'
+          ? this.ui.map.current
+          : level.state === 'locked'
+            ? this.ui.map.locked
+            : level.state === 'coming-soon'
+              ? this.ui.panel.comingSoon
+              : '';
+      const rowChildren: (Node | string)[] = [el('span', { class: 'map-node-label', text: label })];
+      if (note) rowChildren.push(el('span', { class: 'map-node-note', text: note }));
+
+      if (navigable) {
+        const button = el(
+          'button',
+          {
+            class: `map-node map-${level.state}`,
+            type: 'button',
+            attrs: { 'aria-current': level.state === 'current' ? 'true' : 'false' },
+          },
+          rowChildren,
+        );
+        on(button, 'click', () => {
+          this.game.goToLevel(level.id);
+          this.active = 'mission';
+          this.render();
+          this.onFocusTerminal();
+        });
+        container.append(button);
+      } else {
+        container.append(
+          el(
+            'div',
+            { class: `map-node map-${level.state}`, attrs: { 'aria-disabled': 'true' } },
+            rowChildren,
+          ),
+        );
+      }
+    }
     return container;
   }
 
